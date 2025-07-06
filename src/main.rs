@@ -1,6 +1,7 @@
 mod cli;
 mod commands;
 mod storage;
+mod tui;
 
 use cli::{Cli, Commands};
 use clap::Parser;
