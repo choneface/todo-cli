@@ -21,8 +21,6 @@ fn main() {
             tag,
             due,
         } => commands::list::run(all, priority, tag, due),
-        Commands::Done => commands::done::run(),
-        Commands::Remove => commands::remove::run(),
         Commands::Edit => commands::edit::run(),
     }
 }

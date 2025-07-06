@@ -35,7 +35,5 @@ pub enum Commands {
         #[arg(long)]
         due: Option<String>,
     },
-    Done,
-    Remove,
     Edit,
 }
