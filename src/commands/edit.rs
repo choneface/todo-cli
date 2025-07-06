@@ -39,6 +39,9 @@ fn launch_ui() -> Result<(), Box<dyn std::error::Error>> {
                 app.toggle_done();
                 app.save();
             }
+            crate::tui::events::InputEvent::ToggleExpand => {
+                app.toggle_expanded();
+            }
             _ => {}
         }
     }

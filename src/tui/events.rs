@@ -6,6 +6,7 @@ pub enum InputEvent {
     Down,
     Up,
     ToggleDone,
+    ToggleExpand,
     None,
 }
 
@@ -16,7 +17,8 @@ pub fn poll_input(timeout: Duration) -> std::io::Result<InputEvent> {
                 KeyCode::Char('q') => InputEvent::Quit,
                 KeyCode::Down => InputEvent::Down,
                 KeyCode::Up => InputEvent::Up,
-                KeyCode::Char(' ') => InputEvent::ToggleDone,
+                KeyCode::Enter => InputEvent::ToggleDone,
+                KeyCode::Char(' ') => InputEvent::ToggleExpand,
                 _ => InputEvent::None,
             });
         }

@@ -3,6 +3,7 @@ use crate::storage::{save_items, TodoItem};
 pub struct App {
     pub todos: Vec<TodoItem>,
     pub selected: usize,
+    pub expanded: Option<usize>,
 }
 
 impl App {
@@ -11,6 +12,7 @@ impl App {
         Self {
             todos,
             selected: 0,
+            expanded: None,
         }
     }
 
@@ -35,6 +37,14 @@ impl App {
     pub fn save(&self) {
         if let Err(e) = save_items(&self.todos) {
             eprintln!("Failed to save todos: {}", e);
+        }
+    }
+
+    pub fn toggle_expanded(&mut self) {
+        if self.expanded == Some(self.selected) {
+            self.expanded = None;
+        } else {
+            self.expanded = Some(self.selected);
         }
     }
 }
