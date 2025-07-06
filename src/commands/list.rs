@@ -1,13 +1,34 @@
 use crate::storage::{load_items, TodoItem};
 
-pub fn run() {
+pub fn run(
+    show_all: bool,
+    filter_priority: Option<u8>,
+    filter_tag: Option<String>,
+    filter_due: Option<String>,
+) {
     match load_items() {
-        Ok(items) if items.is_empty() => {
-            println!("No todos yet!");
-        }
         Ok(items) => {
-            for (i, item) in items.iter().enumerate() {
-                print_item(i, item);
+            let filtered = items
+                .into_iter()
+                .enumerate()
+                .filter(|(_, item)| {
+                    (show_all || !item.done)
+                        && filter_priority.map_or(true, |p| item.priority == Some(p))
+                        && filter_tag.as_ref().map_or(true, |tag| {
+                            item.tags
+                                .as_ref()
+                                .map_or(false, |tags| tags.contains(tag))
+                        })
+                        && filter_due.as_ref().map_or(true, |due| item.due.as_deref() == Some(due.as_str()))
+                })
+                .collect::<Vec<_>>();
+
+            if filtered.is_empty() {
+                println!("No matching todos.");
+            } else {
+                for (i, item) in filtered {
+                    print_item(i, &item);
+                }
             }
         }
         Err(e) => {

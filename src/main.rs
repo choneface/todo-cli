@@ -15,7 +15,12 @@ fn main() {
             due,
             tags,
         } => commands::add::run(description, priority, due, tags),
-        Commands::List => commands::list::run(),
+        Commands::List {
+            all,
+            priority,
+            tag,
+            due,
+        } => commands::list::run(all, priority, tag, due),
         Commands::Done => commands::done::run(),
         Commands::Remove => commands::remove::run(),
         Commands::Edit => commands::edit::run(),

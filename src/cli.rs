@@ -22,7 +22,19 @@ pub enum Commands {
         #[arg(long, value_delimiter = ',')]
         tags: Option<Vec<String>>,
     },
-    List,
+    List {
+        #[arg(long)]
+        all: bool,
+
+        #[arg(long)]
+        priority: Option<u8>,
+
+        #[arg(long)]
+        tag: Option<String>,
+
+        #[arg(long)]
+        due: Option<String>,
+    },
     Done,
     Remove,
     Edit,
