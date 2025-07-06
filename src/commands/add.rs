@@ -1,16 +1,16 @@
+use crate::storage::{add_item, TodoItem};
+
 pub fn run(description: String, priority: Option<u8>, due: Option<String>, tags: Option<Vec<String>>) {
-    println!("Adding item");
-    println!("  Description: {}", description);
+    let item = TodoItem {
+        description,
+        priority,
+        due,
+        tags,
+        done: false,
+    };
 
-    if let Some(p) = priority {
-        println!("  Priority: {}", p);
-    }
-
-    if let Some(d) = due {
-        println!("  Due: {}", d);
-    }
-
-    if let Some(t) = tags {
-        println!("  Tags: {:?}", t);
+    match add_item(item) {
+        Ok(_) => println!("Item added successfully"),
+        Err(e) => println!("Error adding item: {}", e),
     }
 }
