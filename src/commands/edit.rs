@@ -35,6 +35,10 @@ fn launch_ui() -> Result<(), Box<dyn std::error::Error>> {
             crate::tui::events::InputEvent::Quit => break,
             crate::tui::events::InputEvent::Down => app.next(),
             crate::tui::events::InputEvent::Up => app.previous(),
+            crate::tui::events::InputEvent::ToggleDone => {
+                app.toggle_done();
+                app.save();
+            }
             _ => {}
         }
     }
