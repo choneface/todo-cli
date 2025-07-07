@@ -1,5 +1,5 @@
 [package]
-name = "todo-cli"
+name = "crix-todo"
 version = "0.1.0"
 edition = "2024"
 authors = ["Gavin Garcia <gavin.garcia0001@gmail.com>"]
@@ -9,6 +9,10 @@ readme = "README.md"
 repository = "https://github.com/choneface/todo-cli"
 keywords = ["todo", "cli", "tui"]
 categories = ["command-line-utilities"]
+
+[[bin]]
+name = "todo"
+path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.5.40", features = ["derive"] }

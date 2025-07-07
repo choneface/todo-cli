@@ -151,6 +151,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "crix-todo"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "crossterm",
+ "ratatui",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "crossterm"
 version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -510,17 +521,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "todo-cli"
-version = "0.1.0"
-dependencies = [
- "clap",
- "crossterm",
- "ratatui",
- "serde",
- "serde_json",
 ]
 
 [[package]]
