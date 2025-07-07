@@ -1,6 +1,8 @@
 use ratatui::{
+    layout::{Constraint, Direction, Layout},
     style::{Modifier, Style},
-    widgets::{Block, Borders, List, ListItem, ListState},
+    text::{Line, Span},
+    widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
     Frame,
 };
 
@@ -12,9 +14,30 @@ enum Row<'a> {
 }
 
 pub fn render(f: &mut Frame, app: &App) {
+    // Layout: top = keybindings, bottom = list
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints([
+            Constraint::Length(2), // keybindings
+            Constraint::Min(0),    // list
+        ])
+        .split(f.size());
+
+    // Draw header paragraph
+    let header = Paragraph::new(Line::from(vec![
+        Span::raw("[↑/↓] Move    "),
+        Span::raw("[⏎] Toggle Done    "),
+        Span::raw("[Space] Expand    "),
+        Span::raw("[q] Quit"),
+    ]))
+    .block(Block::default());
+
+    f.render_widget(header, chunks[0]);
+
+    // Now build list
     let mut rows: Vec<Row> = Vec::new();
 
-    // Use the visual_order to determine how we display items
     let mut last_priority: Option<u8> = None;
     for &i in &app.visual_order {
         let todo = &app.todos[i];
@@ -71,5 +94,5 @@ pub fn render(f: &mut Frame, app: &App) {
         .block(Block::default().title("Todos").borders(Borders::ALL))
         .highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
-    f.render_stateful_widget(list, f.size(), &mut state);
+    f.render_stateful_widget(list, chunks[1], &mut state);
 }
