@@ -2,22 +2,31 @@ use crate::storage::{save_items, TodoItem};
 
 pub struct App {
     pub todos: Vec<TodoItem>,
+    pub visual_order: Vec<usize>,
     pub selected: usize,
     pub expanded: Option<usize>,
 }
 
 impl App {
-    pub fn new(mut todos: Vec<TodoItem>) -> Self {
-        todos.sort_by_key(|t| t.done);
+    pub fn new(todos: Vec<TodoItem>) -> Self {
+        let mut priority_sorted = todos
+            .iter()
+            .enumerate()
+            .collect::<Vec<(usize, &TodoItem)>>();
+    
+        priority_sorted.sort_by_key(|(_, t)| t.priority.unwrap_or(99));
+        let visual_order = priority_sorted.into_iter().map(|(i, _)| i).collect();
+    
         Self {
             todos,
+            visual_order,
             selected: 0,
             expanded: None,
         }
     }
 
     pub fn next(&mut self) {
-        if self.selected + 1 < self.todos.len() {
+        if self.selected + 1 < self.visual_order.len() {
             self.selected += 1;
         }
     }
@@ -29,22 +38,24 @@ impl App {
     }
 
     pub fn toggle_done(&mut self) {
-        if let Some(todo) = self.todos.get_mut(self.selected) {
-            todo.done = !todo.done;
+        if let Some(&actual_index) = self.visual_order.get(self.selected) {
+            self.todos[actual_index].done = !self.todos[actual_index].done;
+        }
+    }
+
+    pub fn toggle_expanded(&mut self) {
+        if let Some(&actual_index) = self.visual_order.get(self.selected) {
+            if self.expanded == Some(actual_index) {
+                self.expanded = None;
+            } else {
+                self.expanded = Some(actual_index);
+            }
         }
     }
 
     pub fn save(&self) {
         if let Err(e) = save_items(&self.todos) {
             eprintln!("Failed to save todos: {}", e);
-        }
-    }
-
-    pub fn toggle_expanded(&mut self) {
-        if self.expanded == Some(self.selected) {
-            self.expanded = None;
-        } else {
-            self.expanded = Some(self.selected);
         }
     }
 }
