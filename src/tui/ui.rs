@@ -76,6 +76,9 @@ pub fn render(f: &mut Frame, app: &App) {
                     if let Some(tags) = &todo.tags {
                         lines.push(format!("   Tags: {:?}", tags));
                     }
+                    if let Some(notes) = &todo.notes {
+                        lines.push(format!("   Notes: {}", notes));
+                    }
                 }
 
                 visual_items.push(ListItem::new(lines.join("\n")));

@@ -10,6 +10,7 @@ pub struct TodoItem {
     pub due: Option<String>,
     pub tags: Option<Vec<String>>,
     pub done: bool,
+    pub notes: Option<String>,
 }
 
 const TODO_FILE: &str = "todo.json";

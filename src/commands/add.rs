@@ -1,12 +1,13 @@
 use crate::storage::{add_item, TodoItem};
 
-pub fn run(description: String, priority: Option<u8>, due: Option<String>, tags: Option<Vec<String>>) {
+pub fn run(description: String, priority: Option<u8>, due: Option<String>, tags: Option<Vec<String>>, notes: Option<String>) {
     let item = TodoItem {
         description,
         priority,
         due,
         tags,
         done: false,
+        notes,
     };
 
     match add_item(item) {

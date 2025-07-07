@@ -26,6 +26,10 @@ pub enum Commands {
         /// Comma-separated list of tags
         #[arg(long, value_delimiter = ',')]
         tags: Option<Vec<String>>,
+
+        /// Optional notes
+        #[arg(long)]
+        notes: Option<String>,
     },
 
     /// List all todos

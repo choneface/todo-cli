@@ -15,7 +15,8 @@ fn main() {
             priority,
             due,
             tags,
-        } => commands::add::run(description, priority, due, tags),
+            notes,
+        } => commands::add::run(description, priority, due, tags, notes),
         Commands::List {
             all,
             priority,
