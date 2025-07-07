@@ -2,7 +2,13 @@
 name = "todo-cli"
 version = "0.1.0"
 edition = "2024"
+authors = ["Gavin Garcia <gavin.garcia0001@gmail.com>"]
+description = "A terminal-based todo list manager with CLI and TUI support"
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/choneface/todo-cli"
+keywords = ["todo", "cli", "tui"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 clap = { version = "4.5.40", features = ["derive"] }
