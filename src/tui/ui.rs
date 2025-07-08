@@ -5,12 +5,13 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
     Frame,
 };
-
+use ratatui::layout::Rect;
+use crate::storage::TodoItem;
 use crate::tui::app::App;
 
-enum Row<'a> {
+enum ListViewItem<'a> {
     Header(String),
-    Todo(usize, &'a crate::storage::TodoItem), // (index_in_todos, item)
+    Todo(usize, &'a TodoItem), // (index_in_todos, item)
 }
 
 pub fn render(f: &mut Frame, app: &App) {
@@ -24,19 +25,11 @@ pub fn render(f: &mut Frame, app: &App) {
         ])
         .split(f.size());
 
-    // Draw header paragraph
-    let header = Paragraph::new(Line::from(vec![
-        Span::raw("[↑/↓] Move    "),
-        Span::raw("[⏎] Toggle Done    "),
-        Span::raw("[Space] Expand    "),
-        Span::raw("[q] Quit"),
-    ]))
-    .block(Block::default());
+    // Draw the keybindings
+    render_keybindings(f, chunks[0]);
 
-    f.render_widget(header, chunks[0]);
-
-    // Now build list
-    let mut rows: Vec<Row> = Vec::new();
+    // Now build the list of todos
+    let mut list_view_items: Vec<ListViewItem> = Vec::new();
 
     let mut last_priority: Option<u8> = None;
     for &i in &app.visual_order {
@@ -44,45 +37,29 @@ pub fn render(f: &mut Frame, app: &App) {
         let priority = todo.priority.unwrap_or(99);
 
         if Some(priority) != last_priority {
-            rows.push(Row::Header(format!(
+            list_view_items.push(ListViewItem::Header(format!(
                 "Priority {}",
                 if priority == 99 { "None".to_string() } else { priority.to_string() }
             )));
             last_priority = Some(priority);
         }
 
-        rows.push(Row::Todo(i, todo));
+        list_view_items.push(ListViewItem::Todo(i, todo));
     }
 
     let mut visual_items = Vec::new();
     let mut visual_index_for_selected = 0;
 
-    for row in rows.iter() {
+    for row in list_view_items.iter() {
         match row {
-            Row::Header(text) => {
-                visual_items.push(ListItem::new(text.clone()));
+            ListViewItem::Header(text) => {
+                visual_items.push(build_header(text));
             }
-            Row::Todo(i, todo) => {
-                let checkbox = if todo.done { "[x]" } else { "[ ]" };
-                let mut lines = vec![format!(" -  {} {}", checkbox, todo.description)];
+            ListViewItem::Todo(i, todo) => {
+                visual_items.push(build_todo(i, todo, app));
 
-                if app.expanded == Some(*i) {
-                    if let Some(p) = todo.priority {
-                        lines.push(format!("   Priority: {}", p));
-                    }
-                    if let Some(due) = &todo.due {
-                        lines.push(format!("   Due: {}", due));
-                    }
-                    if let Some(tags) = &todo.tags {
-                        lines.push(format!("   Tags: {:?}", tags));
-                    }
-                    if let Some(notes) = &todo.notes {
-                        lines.push(format!("   Notes: {}", notes));
-                    }
-                }
-
-                visual_items.push(ListItem::new(lines.join("\n")));
-
+                // sort of ugly but can't think of a way to abstract this out
+                // at 11:38 at night, sorry.
                 if Some(*i) == app.visual_order.get(app.selected).copied() {
                     visual_index_for_selected = visual_items.len() - 1;
                 }
@@ -98,4 +75,41 @@ pub fn render(f: &mut Frame, app: &App) {
         .highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
     f.render_stateful_widget(list, chunks[1], &mut state);
+}
+
+fn render_keybindings(f: &mut Frame, rect: Rect) {
+    let header = Paragraph::new(Line::from(vec![
+        Span::raw("[↑/↓] Move    "),
+        Span::raw("[⏎] Toggle Done    "),
+        Span::raw("[Space] Expand    "),
+        Span::raw("[q] Quit"),
+    ]))
+        .block(Block::default());
+
+    f.render_widget(header, rect);
+}
+
+fn build_header(text: &str) -> ListItem {
+    ListItem::new(text)
+}
+
+fn build_todo<'a>(i: &usize, todo: &&TodoItem, app: &App) -> ListItem<'a> {
+    let checkbox = if todo.done { "[x]" } else { "[ ]" };
+    let mut lines = vec![format!(" -  {} {}", checkbox, todo.description)];
+
+    if app.expanded == Some(*i) {
+        if let Some(p) = todo.priority {
+            lines.push(format!("   Priority: {}", p));
+        }
+        if let Some(due) = &todo.due {
+            lines.push(format!("   Due: {}", due));
+        }
+        if let Some(tags) = &todo.tags {
+            lines.push(format!("   Tags: {:?}", tags));
+        }
+        if let Some(notes) = &todo.notes {
+            lines.push(format!("   Notes: {}", notes));
+        }
+    }
+    ListItem::new(lines.join("\n"))
 }
