@@ -60,3 +60,58 @@ impl App {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn next_and_prev_test() {
+        let mut app = App::new(vec![make_todo("1"), make_todo("2"), make_todo("3")]);
+        assert_eq!(app.selected, 0);
+        app.next();
+        assert_eq!(app.selected, 1);
+        app.previous();
+        assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn toggle_done_test() {
+        let mut app = App::new(vec![make_todo("1")]);
+        assert_eq!(app.selected, 0);
+        assert_eq!(app.todos.len(), 1);
+
+        app.toggle_done();
+        let completed_todo = app.todos[0].clone();
+        assert_eq!(completed_todo.done, true);
+
+        app.toggle_done();
+        let incomplete_todo = app.todos[0].clone();
+        assert_eq!(incomplete_todo.done, false);
+    }
+
+    #[test]
+    fn toggle_expanded_test() {
+        let mut app = App::new(vec![make_todo("1")]);
+        assert_eq!(app.selected, 0);
+        assert_eq!(app.todos.len(), 1);
+        assert_eq!(app.expanded, None);
+
+        app.toggle_expanded();
+        assert_eq!(app.expanded, Some(0));
+
+        app.toggle_expanded();
+        assert_eq!(app.expanded, None);
+    }
+
+    fn make_todo(description: &str) -> TodoItem {
+        TodoItem {
+            description: description.into(),
+            priority: None,
+            due: None,
+            tags: None,
+            notes: None,
+            done: false,
+        }
+    }
+}
