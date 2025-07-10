@@ -1,7 +1,7 @@
 use std::io;
 use std::time::Duration;
 
-use crate::storage::load_items;
+use crate::storage::{Storage};
 use crate::tui::{app::App, events::poll_input, ui::render};
 
 use crossterm::{
@@ -18,7 +18,8 @@ pub fn run() {
 }
 
 fn launch_ui() -> Result<(), Box<dyn std::error::Error>> {
-    let todos = load_items()?;
+    let storage = Storage::new("todo.json");
+    let todos = storage.load_items()?;
     let mut app = App::new(todos);
 
     enable_raw_mode()?;

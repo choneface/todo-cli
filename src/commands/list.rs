@@ -1,4 +1,4 @@
-use crate::storage::{load_items, TodoItem};
+use crate::storage::{Storage, TodoItem};
 
 pub fn run(
     show_all: bool,
@@ -6,7 +6,8 @@ pub fn run(
     filter_tag: Option<String>,
     filter_due: Option<String>,
 ) {
-    match load_items() {
+    let storage = Storage::new("todo.json");
+    match storage.load_items() {
         Ok(items) => {
             let filtered = items
                 .into_iter()

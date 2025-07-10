@@ -13,34 +13,37 @@ pub struct TodoItem {
     pub notes: Option<String>,
 }
 
-const TODO_FILE: &str = "todo.json";
-
-fn get_path() -> PathBuf {
-    PathBuf::from(TODO_FILE)
+pub struct Storage {
+    path: PathBuf,
 }
 
-pub fn load_items() -> io::Result<Vec<TodoItem>> {
-    let path = get_path();
-    if !path.exists() {
-        return Ok(vec![]);
+impl Storage {
+    pub fn new(path: &str) -> Self {
+        Self {
+            path: PathBuf::from(path),
+        }
     }
 
-    let file = OpenOptions::new().read(true).open(path)?;
-    let reader = BufReader::new(file);
-    let items = serde_json::from_reader(reader)?;
-    Ok(items)
+    pub fn load_items(&self) -> io::Result<Vec<TodoItem>> {
+        let file = OpenOptions::new().read(true).open(&self.path)?;
+        let reader = BufReader::new(file);
+        let items = serde_json::from_reader(reader)?;
+        Ok(items)
+    }
+
+    pub fn save_items(&self, items: &[TodoItem]) -> io::Result<()> {
+        let json = serde_json::to_string_pretty(items)?;
+        let mut file = fs::File::create(&self.path)?;
+        file.write_all(json.as_bytes())?;
+        Ok(())
+    }
+
+    pub fn add_item(&self, item: TodoItem) -> io::Result<()> {
+        let mut items = self.load_items()?;
+        items.push(item);
+        self.save_items(&items)
+    }
 }
 
-pub fn save_items(items: &[TodoItem]) -> io::Result<()> {
-    let path = get_path();
-    let json = serde_json::to_string_pretty(items)?;
-    let mut file = fs::File::create(path)?;
-    file.write_all(json.as_bytes())?;
-    Ok(())
-}
 
-pub fn add_item(item: TodoItem) -> io::Result<()> {
-    let mut items = load_items()?;
-    items.push(item);
-    save_items(&items)
-}
+
