@@ -1,4 +1,4 @@
-use crate::storage::{Storage, TodoItem};
+use crate::storage::{Storage, TodoItem, FileStorage};
 
 pub struct App {
     pub todos: Vec<TodoItem>,
@@ -54,7 +54,7 @@ impl App {
     }
 
     pub fn save(&self) {
-        let storage = Storage::new("todo.json");
+        let storage = FileStorage::new("todo.json");
         if let Err(e) = storage.save_items(&self.todos) {
             eprintln!("Failed to save todos: {}", e);
         }

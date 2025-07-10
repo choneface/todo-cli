@@ -5,11 +5,11 @@ mod tui;
 
 use cli::{Cli, Commands};
 use clap::Parser;
-use crate::storage::Storage;
+use crate::storage::{FileStorage, Storage};
 
 fn main() {
     let cli = Cli::parse();
-    let storage = Storage::new("todo.json");
+    let storage = FileStorage::new("todo.json");
 
     match cli.command {
         Commands::Add {

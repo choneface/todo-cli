@@ -1,7 +1,7 @@
 use crate::storage::{Storage, TodoItem};
 
 pub fn run(
-    storage: Storage,
+    storage: impl Storage,
     show_all: bool,
     filter_priority: Option<u8>,
     filter_tag: Option<String>,

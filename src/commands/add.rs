@@ -1,6 +1,6 @@
 use crate::storage::{Storage, TodoItem};
 
-pub fn run(storage: Storage, description: String, priority: Option<u8>, due: Option<String>, tags: Option<Vec<String>>, notes: Option<String>) {
+pub fn run(storage: impl Storage, description: String, priority: Option<u8>, due: Option<String>, tags: Option<Vec<String>>, notes: Option<String>) {
     let item = TodoItem {
         description,
         priority,

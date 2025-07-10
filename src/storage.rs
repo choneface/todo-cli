@@ -13,18 +13,25 @@ pub struct TodoItem {
     pub notes: Option<String>,
 }
 
-pub struct Storage {
+pub trait Storage {
+    fn new(path: &str) -> Self;
+    fn load_items(&self) -> io::Result<Vec<TodoItem>>;
+    fn save_items(&self, items: &[TodoItem]) -> io::Result<()>;
+    fn add_item(&self, item: TodoItem) -> io::Result<()>;
+}
+
+pub struct FileStorage {
     path: PathBuf,
 }
 
-impl Storage {
-    pub fn new(path: &str) -> Self {
+impl Storage for FileStorage {
+    fn new(path: &str) -> Self {
         Self {
             path: PathBuf::from(path),
         }
     }
 
-    pub fn load_items(&self) -> io::Result<Vec<TodoItem>> {
+    fn load_items(&self) -> io::Result<Vec<TodoItem>> {
         let file = OpenOptions::new().read(true).open(&self.path)?;
 
         // make sure we handle empty files gracefully
@@ -38,14 +45,14 @@ impl Storage {
         Ok(items)
     }
 
-    pub fn save_items(&self, items: &[TodoItem]) -> io::Result<()> {
+    fn save_items(&self, items: &[TodoItem]) -> io::Result<()> {
         let json = serde_json::to_string_pretty(items)?;
         let mut file = fs::File::create(&self.path)?;
         file.write_all(json.as_bytes())?;
         Ok(())
     }
 
-    pub fn add_item(&self, item: TodoItem) -> io::Result<()> {
+    fn add_item(&self, item: TodoItem) -> io::Result<()> {
         let mut items = self.load_items()?;
         items.push(item);
         self.save_items(&items)
@@ -60,7 +67,7 @@ mod tests {
     #[test]
     fn test_load_empty_file() {
         let file = NamedTempFile::new().unwrap();
-        let storage = Storage::new(file.path().to_str().unwrap());
+        let storage = FileStorage::new(file.path().to_str().unwrap());
         let items = storage.load_items().unwrap();
         assert_eq!(items.len(), 0);
     }
@@ -68,7 +75,7 @@ mod tests {
     #[test]
     fn test_save_and_load_single_item() {
         let file = NamedTempFile::new().unwrap();
-        let storage = Storage::new(file.path().to_str().unwrap());
+        let storage = FileStorage::new(file.path().to_str().unwrap());
 
         let todo = TodoItem {
             description: "Test".to_string(),
@@ -92,7 +99,7 @@ mod tests {
     #[test]
     fn test_save_and_load_multiple_items() {
         let file = NamedTempFile::new().unwrap();
-        let storage = Storage::new(file.path().to_str().unwrap());
+        let storage = FileStorage::new(file.path().to_str().unwrap());
 
         let todo1 = TodoItem {
             description: "Test 1".to_string(),
