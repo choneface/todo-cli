@@ -6,7 +6,7 @@ authors = ["Gavin Garcia <gavin.garcia0001@gmail.com>"]
 description = "A terminal-based todo list manager with CLI and TUI support"
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/choneface/todo-cli"
+repository = "https://github.com/choneface/crix-todo"
 keywords = ["todo", "cli", "tui"]
 categories = ["command-line-utilities"]
 
