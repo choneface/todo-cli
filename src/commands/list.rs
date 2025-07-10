@@ -1,12 +1,12 @@
 use crate::storage::{Storage, TodoItem};
 
 pub fn run(
+    storage: Storage,
     show_all: bool,
     filter_priority: Option<u8>,
     filter_tag: Option<String>,
     filter_due: Option<String>,
 ) {
-    let storage = Storage::new("todo.json");
     match storage.load_items() {
         Ok(items) => {
             let filtered = items

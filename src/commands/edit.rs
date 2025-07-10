@@ -11,14 +11,13 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 
-pub fn run() {
-    if let Err(e) = launch_ui() {
+pub fn run(storage: Storage) {
+    if let Err(e) = launch_ui(storage) {
         eprintln!("Error: {}", e);
     }
 }
 
-fn launch_ui() -> Result<(), Box<dyn std::error::Error>> {
-    let storage = Storage::new("todo.json");
+fn launch_ui(storage: Storage) -> Result<(), Box<dyn std::error::Error>> {
     let todos = storage.load_items()?;
     let mut app = App::new(todos);
 
