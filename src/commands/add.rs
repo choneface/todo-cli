@@ -15,3 +15,68 @@ pub fn run(storage: impl Storage, description: String, priority: Option<u8>, due
         Err(e) => println!("Error adding item: {}", e),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io;
+    use mockall::predicate::eq;
+    use crate::storage::MockStorage;
+    use super::*;
+
+    #[test]
+    fn test_add_item_success() {
+        let mut mock = MockStorage::new();
+
+        let expected_item = TodoItem {
+            description: "Test".into(),
+            priority: Some(2),
+            due: Some("2025-07-09".into()),
+            tags: Some(vec!["test".into()]),
+            done: false,
+            notes: Some("This is a test".into()),
+        };
+
+        mock.expect_add_item()
+            .with(eq(expected_item.clone()))
+            .times(1)
+            .returning(|_| Ok(()));
+
+        run(
+            mock,
+            expected_item.description.clone(),
+            expected_item.priority,
+            expected_item.due.clone(),
+            expected_item.tags.clone(),
+            expected_item.notes.clone(),
+        );
+    }
+
+    #[test]
+    fn test_add_item_failure() {
+        let mut mock = MockStorage::new();
+
+        let expected_item = TodoItem {
+            description: "Failing test".into(),
+            priority: Some(1),
+            due: Some("2025-07-10".into()),
+            tags: Some(vec!["fail".into()]),
+            done: false,
+            notes: Some("Should fail".into()),
+        };
+
+        mock.expect_add_item()
+            .with(eq(expected_item.clone()))
+            .times(1)
+            .returning(|_| Err(io::Error::new(io::ErrorKind::Other, "Simulated failure")));
+
+        // shouldn't panic
+        run(
+            mock,
+            expected_item.description.clone(),
+            expected_item.priority,
+            expected_item.due.clone(),
+            expected_item.tags.clone(),
+            expected_item.notes.clone(),
+        );
+    }
+}

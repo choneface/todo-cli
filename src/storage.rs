@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
 use std::io::{self, BufReader, Write};
 use std::path::PathBuf;
+use mockall::automock;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct TodoItem {
@@ -13,8 +14,8 @@ pub struct TodoItem {
     pub notes: Option<String>,
 }
 
+#[automock]
 pub trait Storage {
-    fn new(path: &str) -> Self;
     fn load_items(&self) -> io::Result<Vec<TodoItem>>;
     fn save_items(&self, items: &[TodoItem]) -> io::Result<()>;
     fn add_item(&self, item: TodoItem) -> io::Result<()>;
@@ -24,13 +25,15 @@ pub struct FileStorage {
     path: PathBuf,
 }
 
-impl Storage for FileStorage {
-    fn new(path: &str) -> Self {
+impl FileStorage {
+    pub fn new(path: &str) -> Self {
         Self {
             path: PathBuf::from(path),
         }
     }
+}
 
+impl Storage for FileStorage {
     fn load_items(&self) -> io::Result<Vec<TodoItem>> {
         let file = OpenOptions::new().read(true).open(&self.path)?;
 

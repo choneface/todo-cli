@@ -5,7 +5,7 @@ mod tui;
 
 use cli::{Cli, Commands};
 use clap::Parser;
-use crate::storage::{FileStorage, Storage};
+use crate::storage::{FileStorage};
 
 fn main() {
     let cli = Cli::parse();
