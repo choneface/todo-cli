@@ -1,6 +1,13 @@
 use crate::storage::{Storage, TodoItem};
 
-pub fn run(storage: impl Storage, description: String, priority: Option<u8>, due: Option<String>, tags: Option<Vec<String>>, notes: Option<String>) {
+pub fn run(
+    storage: impl Storage,
+    description: String,
+    priority: Option<u8>,
+    due: Option<String>,
+    tags: Option<Vec<String>>,
+    notes: Option<String>,
+) {
     let item = TodoItem {
         description,
         priority,
@@ -18,10 +25,10 @@ pub fn run(storage: impl Storage, description: String, priority: Option<u8>, due
 
 #[cfg(test)]
 mod tests {
-    use std::io;
-    use mockall::predicate::eq;
-    use crate::storage::MockStorage;
     use super::*;
+    use crate::storage::MockStorage;
+    use mockall::predicate::eq;
+    use std::io;
 
     #[test]
     fn test_add_item_success() {

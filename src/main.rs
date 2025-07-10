@@ -3,9 +3,9 @@ mod commands;
 mod storage;
 mod tui;
 
-use cli::{Cli, Commands};
+use crate::storage::FileStorage;
 use clap::Parser;
-use crate::storage::{FileStorage};
+use cli::{Cli, Commands};
 
 fn main() {
     let cli = Cli::parse();

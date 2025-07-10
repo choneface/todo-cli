@@ -1,15 +1,15 @@
 use std::io;
 use std::time::Duration;
 
-use crate::storage::{Storage};
+use crate::storage::Storage;
 use crate::tui::{app::App, events::poll_input, ui::render};
 
 use crossterm::{
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     event::{DisableMouseCapture, EnableMouseCapture},
+    execute,
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use ratatui::{backend::CrosstermBackend, Terminal};
+use ratatui::{Terminal, backend::CrosstermBackend};
 
 pub fn run(storage: impl Storage) {
     if let Err(e) = launch_ui(storage) {

@@ -1,13 +1,13 @@
+use crate::storage::TodoItem;
+use crate::tui::app::App;
+use ratatui::layout::Rect;
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout},
     style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
-    Frame,
 };
-use ratatui::layout::Rect;
-use crate::storage::TodoItem;
-use crate::tui::app::App;
 
 enum ListViewItem<'a> {
     Header(String),
@@ -39,7 +39,11 @@ pub fn render(f: &mut Frame, app: &App) {
         if Some(priority) != last_priority {
             list_view_items.push(ListViewItem::Header(format!(
                 "Priority {}",
-                if priority == 99 { "None".to_string() } else { priority.to_string() }
+                if priority == 99 {
+                    "None".to_string()
+                } else {
+                    priority.to_string()
+                }
             )));
             last_priority = Some(priority);
         }
@@ -84,7 +88,7 @@ fn render_keybindings(f: &mut Frame, rect: Rect) {
         Span::raw("[Space] Expand    "),
         Span::raw("[q] Quit"),
     ]))
-        .block(Block::default());
+    .block(Block::default());
 
     f.render_widget(header, rect);
 }

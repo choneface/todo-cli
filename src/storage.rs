@@ -1,8 +1,8 @@
+use mockall::automock;
 use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
 use std::io::{self, BufReader, Write};
 use std::path::PathBuf;
-use mockall::automock;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct TodoItem {
@@ -96,7 +96,6 @@ mod tests {
 
         let todo_from_storage = &todos_from_storage[0];
         assert_eq!(todo_from_storage, &todo)
-
     }
 
     #[test]
@@ -129,4 +128,3 @@ mod tests {
         assert_eq!(todos_from_storage, todos);
     }
 }
-

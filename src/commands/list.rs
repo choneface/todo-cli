@@ -16,11 +16,11 @@ pub fn run(
                     (show_all || !item.done)
                         && filter_priority.map_or(true, |p| item.priority == Some(p))
                         && filter_tag.as_ref().map_or(true, |tag| {
-                            item.tags
-                                .as_ref()
-                                .map_or(false, |tags| tags.contains(tag))
+                            item.tags.as_ref().map_or(false, |tags| tags.contains(tag))
                         })
-                        && filter_due.as_ref().map_or(true, |due| item.due.as_deref() == Some(due.as_str()))
+                        && filter_due
+                            .as_ref()
+                            .map_or(true, |due| item.due.as_deref() == Some(due.as_str()))
                 })
                 .collect::<Vec<_>>();
 
@@ -40,12 +40,7 @@ pub fn run(
 
 fn print_item(index: usize, item: &TodoItem) {
     let status = if item.done { "[X]" } else { "[ ]" };
-    println!(
-        "{}. {} {}",
-        index + 1,
-        status,
-        item.description
-    );
+    println!("{}. {} {}", index + 1, status, item.description);
 
     if let Some(p) = item.priority {
         println!("   Priority: {}", p);

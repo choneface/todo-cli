@@ -1,4 +1,4 @@
-use crate::storage::{Storage, TodoItem, FileStorage};
+use crate::storage::{FileStorage, Storage, TodoItem};
 
 pub struct App {
     pub todos: Vec<TodoItem>,
@@ -13,10 +13,10 @@ impl App {
             .iter()
             .enumerate()
             .collect::<Vec<(usize, &TodoItem)>>();
-    
+
         priority_sorted.sort_by_key(|(_, t)| t.priority.unwrap_or(99));
         let visual_order = priority_sorted.into_iter().map(|(i, _)| i).collect();
-    
+
         Self {
             todos,
             visual_order,
