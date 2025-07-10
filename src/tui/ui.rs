@@ -9,7 +9,7 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
 };
 
-enum ListViewItem<'a> {
+enum Row<'a> {
     Header(String),
     Todo(usize, &'a TodoItem), // (index_in_todos, item)
 }
@@ -25,48 +25,20 @@ pub fn render(f: &mut Frame, app: &App) {
         ])
         .split(f.size());
 
-    // Draw the keybindings
     render_keybindings(f, chunks[0]);
+    render_todo_list(f, app, chunks[1]);
+}
 
-    // Now build the list of todos
-    let mut list_view_items: Vec<ListViewItem> = Vec::new();
-
-    let mut last_priority: Option<u8> = None;
-    for &i in &app.visual_order {
-        let todo = &app.todos[i];
-        let priority = todo.priority.unwrap_or(99);
-
-        if Some(priority) != last_priority {
-            list_view_items.push(ListViewItem::Header(format!(
-                "Priority {}",
-                if priority == 99 {
-                    "None".to_string()
-                } else {
-                    priority.to_string()
-                }
-            )));
-            last_priority = Some(priority);
-        }
-
-        list_view_items.push(ListViewItem::Todo(i, todo));
-    }
-
+fn render_todo_list(f: &mut Frame, app: &App, chunk: Rect) {
+    let (rows, visual_index_for_selected) = build_rows(&app);
     let mut visual_items = Vec::new();
-    let mut visual_index_for_selected = 0;
-
-    for row in list_view_items.iter() {
+    for row in rows.iter() {
         match row {
-            ListViewItem::Header(text) => {
+            Row::Header(text) => {
                 visual_items.push(build_header(text));
             }
-            ListViewItem::Todo(i, todo) => {
-                visual_items.push(build_todo(i, todo, app));
-
-                // sort of ugly but can't think of a way to abstract this out
-                // at 11:38 at night, sorry.
-                if Some(*i) == app.visual_order.get(app.selected).copied() {
-                    visual_index_for_selected = visual_items.len() - 1;
-                }
+            Row::Todo(i, todo) => {
+                visual_items.push(render_todo(todo, app.expanded == Some(i.clone())));
             }
         }
     }
@@ -78,7 +50,35 @@ pub fn render(f: &mut Frame, app: &App) {
         .block(Block::default().title("Todos").borders(Borders::ALL))
         .highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
-    f.render_stateful_widget(list, chunks[1], &mut state);
+    f.render_stateful_widget(list, chunk, &mut state);
+}
+
+fn build_rows(app: &App) -> (Vec<Row>, usize) {
+    let mut rows: Vec<Row> = Vec::new();
+    let mut last_priority: Option<u8> = None;
+    let mut visual_index_for_selected = 0;
+    for &i in &app.visual_order {
+        let todo = &app.todos[i];
+        let priority = todo.priority.unwrap_or(99);
+
+        if Some(priority) != last_priority {
+            rows.push(Row::Header(format!(
+                "Priority {}",
+                if priority == 99 {
+                    "None".to_string()
+                } else {
+                    priority.to_string()
+                }
+            )));
+            last_priority = Some(priority);
+        }
+
+        rows.push(Row::Todo(i, todo));
+        if Some(i) == app.visual_order.get(app.selected).copied() {
+            visual_index_for_selected = rows.len() - 1;
+        }
+    }
+    (rows, visual_index_for_selected)
 }
 
 fn render_keybindings(f: &mut Frame, rect: Rect) {
@@ -97,11 +97,11 @@ fn build_header(text: &str) -> ListItem {
     ListItem::new(text)
 }
 
-fn build_todo<'a>(i: &usize, todo: &&TodoItem, app: &App) -> ListItem<'a> {
+fn render_todo(todo: &TodoItem, is_expanded: bool) -> ListItem<'static> {
     let checkbox = if todo.done { "[x]" } else { "[ ]" };
     let mut lines = vec![format!(" -  {} {}", checkbox, todo.description)];
 
-    if app.expanded == Some(*i) {
+    if is_expanded {
         if let Some(p) = todo.priority {
             lines.push(format!("   Priority: {}", p));
         }
