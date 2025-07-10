@@ -3,7 +3,7 @@ use std::fs::{self, OpenOptions};
 use std::io::{self, BufReader, Write};
 use std::path::PathBuf;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct TodoItem {
     pub description: String,
     pub priority: Option<u8>,
@@ -26,6 +26,13 @@ impl Storage {
 
     pub fn load_items(&self) -> io::Result<Vec<TodoItem>> {
         let file = OpenOptions::new().read(true).open(&self.path)?;
+
+        // make sure we handle empty files gracefully
+        let metadata = file.metadata()?;
+        if metadata.len() == 0 {
+            return Ok(vec![]);
+        }
+
         let reader = BufReader::new(file);
         let items = serde_json::from_reader(reader)?;
         Ok(items)
@@ -45,5 +52,71 @@ impl Storage {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
 
+    #[test]
+    fn test_load_empty_file() {
+        let file = NamedTempFile::new().unwrap();
+        let storage = Storage::new(file.path().to_str().unwrap());
+        let items = storage.load_items().unwrap();
+        assert_eq!(items.len(), 0);
+    }
+
+    #[test]
+    fn test_save_and_load_single_item() {
+        let file = NamedTempFile::new().unwrap();
+        let storage = Storage::new(file.path().to_str().unwrap());
+
+        let todo = TodoItem {
+            description: "Test".to_string(),
+            priority: Some(1),
+            due: Some("2021-01-01".to_string()),
+            tags: Some(vec!["tag1".to_string(), "tag2".to_string()]),
+            done: false,
+            notes: Some("Notes".to_string()),
+        };
+
+        storage.add_item(todo.clone()).unwrap();
+
+        let todos_from_storage = storage.load_items().unwrap();
+        assert_eq!(todos_from_storage.len(), 1);
+
+        let todo_from_storage = &todos_from_storage[0];
+        assert_eq!(todo_from_storage, &todo)
+
+    }
+
+    #[test]
+    fn test_save_and_load_multiple_items() {
+        let file = NamedTempFile::new().unwrap();
+        let storage = Storage::new(file.path().to_str().unwrap());
+
+        let todo1 = TodoItem {
+            description: "Test 1".to_string(),
+            priority: Some(1),
+            due: Some("2021-01-01".to_string()),
+            tags: Some(vec!["first".to_string(), "todo".to_string()]),
+            done: false,
+            notes: Some("first todo".to_string()),
+        };
+        let todo2 = TodoItem {
+            description: "Test 2".to_string(),
+            priority: Some(1),
+            due: Some("2021-02-02".to_string()),
+            tags: Some(vec!["second".to_string(), "todo".to_string()]),
+            done: true,
+            notes: Some("second todo".to_string()),
+        };
+
+        let todos = vec![todo1, todo2];
+        storage.save_items(&todos).unwrap();
+
+        let todos_from_storage = storage.load_items().unwrap();
+        assert_eq!(todos_from_storage.len(), 2);
+        assert_eq!(todos_from_storage, todos);
+    }
+}
 
