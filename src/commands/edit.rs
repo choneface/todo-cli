@@ -37,7 +37,7 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
             crate::tui::events::InputEvent::Up => app.previous(),
             crate::tui::events::InputEvent::ToggleDone => {
                 app.toggle_done();
-                app.save();
+                app.save(&storage);
             }
             crate::tui::events::InputEvent::ToggleExpand => {
                 app.toggle_expanded();

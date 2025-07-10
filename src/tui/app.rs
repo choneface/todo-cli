@@ -1,4 +1,4 @@
-use crate::storage::{FileStorage, Storage, TodoItem};
+use crate::storage::{Storage, TodoItem};
 
 pub struct App {
     pub todos: Vec<TodoItem>,
@@ -53,8 +53,7 @@ impl App {
         }
     }
 
-    pub fn save(&self) {
-        let storage = FileStorage::new("todo.json");
+    pub fn save(&self, storage: &impl Storage) {
         if let Err(e) = storage.save_items(&self.todos) {
             eprintln!("Failed to save todos: {}", e);
         }
@@ -64,6 +63,8 @@ impl App {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::storage::MockStorage;
+    use mockall::predicate::eq;
 
     #[test]
     fn next_and_prev_test() {
@@ -102,6 +103,21 @@ mod tests {
 
         app.toggle_expanded();
         assert_eq!(app.expanded, None);
+    }
+
+    #[test]
+    fn test_save() {
+        let app = App::new(vec![make_todo("1")]);
+        assert_eq!(app.selected, 0);
+
+        let mut storage = MockStorage::new();
+        storage
+            .expect_save_items()
+            .with(eq(vec![app.todos[0].clone()]))
+            .times(1)
+            .returning(|_| Ok(()));
+
+        app.save(&storage)
     }
 
     fn make_todo(description: &str) -> TodoItem {
