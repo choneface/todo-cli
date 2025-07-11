@@ -2,7 +2,7 @@ use crate::storage::TodoItem;
 use crate::tui::app::App;
 use crate::tui::app::InputMode::Editing;
 use crate::tui::view_model::TodoListViewModel;
-use ratatui::layout::{Flex, Rect};
+use ratatui::layout::{Flex, Margin, Rect};
 use ratatui::widgets::Clear;
 use ratatui::{
     Frame,
@@ -37,10 +37,26 @@ pub fn render(f: &mut Frame, app: &App) {
     render_todo_list(f, app, chunks[1]);
 
     if app.mode == Editing {
-        let block = Block::bordered().title("Editing").borders(Borders::ALL);
-        let area = popup_area(f.size(), 60, 20);
-        f.render_widget(Clear, area);
-        f.render_widget(block, area);
+        let outer_block = Block::bordered().borders(Borders::ALL);
+        let outer_area = popup_area(f.size(), 60, 40);
+        f.render_widget(Clear, outer_area);
+        f.render_widget(outer_block, outer_area);
+
+        // Inset area to avoid overlapping with the border and title
+        let inner_area = outer_area.inner(&Margin {
+            vertical: 2,
+            horizontal: 2,
+        });
+
+        // Layout inside the inset area
+        let inner_chunks = Layout::vertical([
+            Constraint::Length(3),
+            // You can add more constraints for additional fields
+        ]);
+        let [desc_area] = inner_chunks.areas(inner_area);
+
+        let input = Paragraph::new("This is text").block(Block::bordered().title("Description"));
+        f.render_widget(input, desc_area);
     }
 }
 
