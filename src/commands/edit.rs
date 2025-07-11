@@ -4,6 +4,7 @@ use std::time::Duration;
 use crate::storage::Storage;
 use crate::tui::{app::App, events::poll_input, ui::render};
 
+use crate::tui::app::InputMode;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
@@ -42,6 +43,8 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
             crate::tui::events::InputEvent::ToggleExpand => {
                 app.toggle_expanded();
             }
+            crate::tui::events::InputEvent::EnableEditing => app.mode = InputMode::Editing,
+            crate::tui::events::InputEvent::DisableEditing => app.mode = InputMode::Normal,
             _ => {}
         }
     }

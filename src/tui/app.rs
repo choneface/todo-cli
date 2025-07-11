@@ -1,10 +1,17 @@
 use crate::storage::{Storage, TodoItem};
 
+#[derive(PartialEq)]
+pub enum InputMode {
+    Normal,
+    Editing,
+}
+
 pub struct App {
     pub todos: Vec<TodoItem>,
     pub visual_order: Vec<usize>,
     pub selected: usize,
     pub expanded: Option<usize>,
+    pub mode: InputMode,
 }
 
 impl App {
@@ -22,6 +29,7 @@ impl App {
             visual_order,
             selected: 0,
             expanded: None,
+            mode: InputMode::Normal,
         }
     }
 
@@ -56,6 +64,14 @@ impl App {
     pub fn save(&self, storage: &impl Storage) {
         if let Err(e) = storage.save_items(&self.todos) {
             eprintln!("Failed to save todos: {}", e);
+        }
+    }
+
+    pub fn toggle_mode(&mut self) {
+        if self.mode == InputMode::Normal {
+            self.mode = InputMode::Editing;
+        } else {
+            self.mode = InputMode::Normal;
         }
     }
 }

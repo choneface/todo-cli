@@ -1,7 +1,9 @@
 use crate::storage::TodoItem;
 use crate::tui::app::App;
+use crate::tui::app::InputMode::Editing;
 use crate::tui::view_model::TodoListViewModel;
-use ratatui::layout::Rect;
+use ratatui::layout::{Flex, Rect};
+use ratatui::widgets::Clear;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
@@ -9,6 +11,7 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
 };
+use std::os::unix::raw::pid_t;
 
 pub enum Row<'a> {
     Header(String),
@@ -32,6 +35,21 @@ pub fn render(f: &mut Frame, app: &App) {
 
     render_keybindings(f, chunks[0]);
     render_todo_list(f, app, chunks[1]);
+
+    if app.mode == Editing {
+        let block = Block::bordered().title("Editing").borders(Borders::ALL);
+        let area = popup_area(f.size(), 60, 20);
+        f.render_widget(Clear, area);
+        f.render_widget(block, area);
+    }
+}
+
+fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
+    let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
+    let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);
+    let [area] = vertical.areas(area);
+    let [area] = horizontal.areas(area);
+    area
 }
 
 fn render_todo_list(f: &mut Frame, app: &App, chunk: Rect) {
@@ -53,6 +71,7 @@ fn render_keybindings(f: &mut Frame, rect: Rect) {
         Span::raw("[↑/↓] Move    "),
         Span::raw("[⏎] Toggle Done    "),
         Span::raw("[Space] Expand    "),
+        Span::raw("[e] Edit    "),
         Span::raw("[q] Quit"),
     ]))
     .block(Block::default());

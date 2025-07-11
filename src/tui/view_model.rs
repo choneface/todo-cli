@@ -47,7 +47,7 @@ impl<'a> TodoListViewModel<'a> {
 mod tests {
     use super::*;
     use crate::storage::TodoItem;
-    use crate::tui::app::App;
+    use crate::tui::app::{App, InputMode};
 
     fn make_todo(
         description: &str,
@@ -85,6 +85,7 @@ mod tests {
             visual_order: vec![0, 1, 2, 3],
             selected: 1, // select the second tod0
             expanded: Some(1),
+            mode: InputMode::Normal,
         };
 
         let vm = TodoListViewModel::from_app(&app);
@@ -121,6 +122,7 @@ mod tests {
             visual_order: vec![0, 1],
             selected: 0,
             expanded: Some(1),
+            mode: InputMode::Normal,
         };
 
         let vm = TodoListViewModel::from_app(&app);
@@ -154,6 +156,7 @@ mod tests {
             visual_order: vec![],
             selected: 0,
             expanded: None,
+            mode: InputMode::Normal,
         };
 
         let vm = TodoListViewModel::from_app(&app);
