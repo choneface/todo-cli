@@ -1,5 +1,6 @@
 use crate::storage::TodoItem;
 use crate::tui::app::App;
+use crate::tui::view_model::TodoListViewModel;
 use ratatui::layout::Rect;
 use ratatui::{
     Frame,
@@ -9,9 +10,13 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
 };
 
-enum Row<'a> {
+pub enum Row<'a> {
     Header(String),
-    Todo(usize, &'a TodoItem), // (index_in_todos, item)
+    Todo {
+        index_in_todos: usize,
+        item: &'a TodoItem,
+        is_expanded: bool,
+    },
 }
 
 pub fn render(f: &mut Frame, app: &App) {
@@ -30,55 +35,17 @@ pub fn render(f: &mut Frame, app: &App) {
 }
 
 fn render_todo_list(f: &mut Frame, app: &App, chunk: Rect) {
-    let (rows, visual_index_for_selected) = build_rows(&app);
-    let mut visual_items = Vec::new();
-    for row in rows.iter() {
-        match row {
-            Row::Header(text) => {
-                visual_items.push(build_header(text));
-            }
-            Row::Todo(i, todo) => {
-                visual_items.push(render_todo(todo, app.expanded == Some(i.clone())));
-            }
-        }
-    }
+    let view_model = TodoListViewModel::from_app(app);
+    let items: Vec<ListItem> = view_model.rows.iter().map(render_row).collect();
 
     let mut state = ListState::default();
-    state.select(Some(visual_index_for_selected));
+    state.select(view_model.selected_index);
 
-    let list = List::new(visual_items)
+    let list = List::new(items)
         .block(Block::default().title("Todos").borders(Borders::ALL))
         .highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
     f.render_stateful_widget(list, chunk, &mut state);
-}
-
-fn build_rows(app: &App) -> (Vec<Row>, usize) {
-    let mut rows: Vec<Row> = Vec::new();
-    let mut last_priority: Option<u8> = None;
-    let mut visual_index_for_selected = 0;
-    for &i in &app.visual_order {
-        let todo = &app.todos[i];
-        let priority = todo.priority.unwrap_or(99);
-
-        if Some(priority) != last_priority {
-            rows.push(Row::Header(format!(
-                "Priority {}",
-                if priority == 99 {
-                    "None".to_string()
-                } else {
-                    priority.to_string()
-                }
-            )));
-            last_priority = Some(priority);
-        }
-
-        rows.push(Row::Todo(i, todo));
-        if Some(i) == app.visual_order.get(app.selected).copied() {
-            visual_index_for_selected = rows.len() - 1;
-        }
-    }
-    (rows, visual_index_for_selected)
 }
 
 fn render_keybindings(f: &mut Frame, rect: Rect) {
@@ -93,27 +60,31 @@ fn render_keybindings(f: &mut Frame, rect: Rect) {
     f.render_widget(header, rect);
 }
 
-fn build_header(text: &str) -> ListItem {
-    ListItem::new(text)
-}
+fn render_row<'a>(row: &Row) -> ListItem<'a> {
+    match row {
+        Row::Header(text) => ListItem::new(text.clone()),
+        Row::Todo {
+            item, is_expanded, ..
+        } => {
+            let checkbox = if item.done { "[x]" } else { "[ ]" };
+            let mut lines = vec![format!(" -  {} {}", checkbox, item.description)];
 
-fn render_todo(todo: &TodoItem, is_expanded: bool) -> ListItem<'static> {
-    let checkbox = if todo.done { "[x]" } else { "[ ]" };
-    let mut lines = vec![format!(" -  {} {}", checkbox, todo.description)];
+            if *is_expanded {
+                if let Some(p) = item.priority {
+                    lines.push(format!("   Priority: {}", p));
+                }
+                if let Some(due) = &item.due {
+                    lines.push(format!("   Due: {}", due));
+                }
+                if let Some(tags) = &item.tags {
+                    lines.push(format!("   Tags: {:?}", tags));
+                }
+                if let Some(notes) = &item.notes {
+                    lines.push(format!("   Notes: {}", notes));
+                }
+            }
 
-    if is_expanded {
-        if let Some(p) = todo.priority {
-            lines.push(format!("   Priority: {}", p));
-        }
-        if let Some(due) = &todo.due {
-            lines.push(format!("   Due: {}", due));
-        }
-        if let Some(tags) = &todo.tags {
-            lines.push(format!("   Tags: {:?}", tags));
-        }
-        if let Some(notes) = &todo.notes {
-            lines.push(format!("   Notes: {}", notes));
+            ListItem::new(lines.join("\n"))
         }
     }
-    ListItem::new(lines.join("\n"))
 }
