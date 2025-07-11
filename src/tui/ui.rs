@@ -1,7 +1,7 @@
 use crate::storage::TodoItem;
 use crate::tui::app::App;
 use crate::tui::app::InputMode::Editing;
-use crate::tui::view_model::TodoListViewModel;
+use crate::tui::view_models::todo_view_model::TodoListViewModel;
 use ratatui::layout::{Flex, Margin, Rect};
 use ratatui::widgets::Clear;
 use ratatui::{
@@ -38,25 +38,46 @@ pub fn render(f: &mut Frame, app: &App) {
 
     if app.mode == Editing {
         let outer_block = Block::bordered().borders(Borders::ALL);
-        let outer_area = popup_area(f.size(), 60, 40);
+        let outer_area = popup_area(f.size(), 60, 50);
         f.render_widget(Clear, outer_area);
         f.render_widget(outer_block, outer_area);
 
         // Inset area to avoid overlapping with the border and title
         let inner_area = outer_area.inner(&Margin {
-            vertical: 2,
-            horizontal: 2,
+            vertical: 1,
+            horizontal: 1,
         });
 
         // Layout inside the inset area
         let inner_chunks = Layout::vertical([
+            Constraint::Length(2),
             Constraint::Length(3),
-            // You can add more constraints for additional fields
-        ]);
-        let [desc_area] = inner_chunks.areas(inner_area);
+            Constraint::Length(3),
+            Constraint::Length(3),
+            Constraint::Length(3),
+            Constraint::Length(8),
+        ])
+        .split(inner_area);
 
-        let input = Paragraph::new("This is text").block(Block::bordered().title("Description"));
-        f.render_widget(input, desc_area);
+        let header = Paragraph::new(Line::from(vec![
+            Span::raw("[↑/↓] Move    "),
+            Span::raw("[i] Edit field    "),
+            Span::raw("[esc] To save and exit"),
+        ]))
+        .block(Block::default());
+        let description =
+            Paragraph::new("This is text").block(Block::bordered().title("Description"));
+        let priority =
+            Paragraph::new("This is priority message").block(Block::bordered().title("Priority"));
+        let due = Paragraph::new("This is due message").block(Block::bordered().title("Due"));
+        let tags = Paragraph::new("This is tags message").block(Block::bordered().title("Tags"));
+        let notes = Paragraph::new("This is notes message").block(Block::bordered().title("Notes"));
+        f.render_widget(header, inner_chunks[0]);
+        f.render_widget(description, inner_chunks[1]);
+        f.render_widget(priority, inner_chunks[2]);
+        f.render_widget(due, inner_chunks[3]);
+        f.render_widget(tags, inner_chunks[4]);
+        f.render_widget(notes, inner_chunks[5]);
     }
 }
 

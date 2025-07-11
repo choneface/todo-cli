@@ -1,4 +1,4 @@
 pub mod app;
 pub mod events;
 pub mod ui;
-mod view_model;
+mod view_models;
