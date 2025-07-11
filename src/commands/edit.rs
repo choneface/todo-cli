@@ -32,20 +32,26 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
     loop {
         terminal.draw(|f| render(f, &app))?;
 
-        match poll_input(Duration::from_millis(200))? {
-            crate::tui::events::InputEvent::Quit => break,
-            crate::tui::events::InputEvent::Down => app.next(),
-            crate::tui::events::InputEvent::Up => app.previous(),
-            crate::tui::events::InputEvent::ToggleDone => {
-                app.toggle_done();
-                app.save(&storage);
-            }
-            crate::tui::events::InputEvent::ToggleExpand => {
-                app.toggle_expanded();
-            }
-            crate::tui::events::InputEvent::EnableEditing => app.mode = InputMode::Editing,
-            crate::tui::events::InputEvent::DisableEditing => app.mode = InputMode::Normal,
-            _ => {}
+        match app.mode {
+            InputMode::Normal => match poll_input(Duration::from_millis(200))? {
+                crate::tui::events::InputEvent::Quit => break,
+                crate::tui::events::InputEvent::Down => app.next(),
+                crate::tui::events::InputEvent::Up => app.previous(),
+                crate::tui::events::InputEvent::ToggleDone => {
+                    app.toggle_done();
+                    app.save(&storage);
+                }
+                crate::tui::events::InputEvent::ToggleExpand => {
+                    app.toggle_expanded();
+                }
+                crate::tui::events::InputEvent::EnableEditing => app.mode = InputMode::Editing,
+                crate::tui::events::InputEvent::DisableEditing => app.mode = InputMode::Normal,
+                _ => {}
+            },
+            InputMode::Editing => match poll_input(Duration::from_millis(200))? {
+                crate::tui::events::InputEvent::DisableEditing => app.mode = InputMode::Normal,
+                _ => {}
+            },
         }
     }
 
