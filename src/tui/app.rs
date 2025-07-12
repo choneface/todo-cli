@@ -6,13 +6,69 @@ pub enum InputMode {
     Editing,
 }
 
+#[derive(Clone)]
+pub struct FieldBuffer {
+    pub value: String,
+    pub cursor: usize,
+}
+
+impl FieldBuffer {
+    pub fn new(value: String) -> Self {
+        let cursor = value.chars().count();
+        Self { value, cursor }
+    }
+
+    fn byte_index(&self) -> usize {
+        self.value
+            .char_indices()
+            .map(|(i, _)| i)
+            .nth(self.cursor)
+            .unwrap_or(self.value.len())
+    }
+
+    fn clamp(&self, pos: usize) -> usize {
+        pos.clamp(0, self.value.chars().count())
+    }
+
+    pub fn move_left(&mut self) {
+        self.cursor = self.clamp(self.cursor.saturating_sub(1));
+    }
+
+    pub fn move_right(&mut self) {
+        self.cursor = self.clamp(self.cursor.saturating_add(1));
+    }
+
+    pub fn reset_cursor(&mut self) {
+        self.cursor = self.value.chars().count();
+    }
+
+    pub fn insert_char(&mut self, ch: char) {
+        let idx = self.byte_index();
+        self.value.insert(idx, ch);
+        self.move_right();
+    }
+
+    pub fn backspace(&mut self) {
+        if self.cursor == 0 {
+            return;
+        }
+        let left = self.cursor - 1;
+        let head = self.value.chars().take(left);
+        let tail = self.value.chars().skip(self.cursor);
+        self.value = head.chain(tail).collect();
+        self.move_left();
+    }
+}
+
 pub struct EditBuffer {
-    pub description: String,
-    pub priority: String,
-    pub due: String,
-    pub tags: String,
-    pub notes: String,
+    pub fields: [FieldBuffer; 5], // 0-4: desc, prio, due, tags, notes
     pub selected_field: usize,
+}
+
+impl EditBuffer {
+    pub fn current_field_mut(&mut self) -> &mut FieldBuffer {
+        &mut self.fields[self.selected_field]
+    }
 }
 
 pub struct App {
@@ -54,6 +110,7 @@ impl App {
             InputMode::Editing => {
                 if let Some(buf) = self.edit_buffer.as_mut() {
                     if buf.selected_field + 1 < 5 {
+                        buf.fields[buf.selected_field].reset_cursor();
                         buf.selected_field += 1;
                     }
                 }
@@ -71,10 +128,23 @@ impl App {
             InputMode::Editing => {
                 if let Some(buf) = self.edit_buffer.as_mut() {
                     if buf.selected_field > 0 {
+                        buf.fields[buf.selected_field].reset_cursor();
                         buf.selected_field -= 1;
                     }
                 }
             }
+        }
+    }
+
+    pub fn left(&mut self) {
+        if let Some(buf) = self.edit_buffer.as_mut() {
+            buf.current_field_mut().move_left();
+        }
+    }
+
+    pub fn right(&mut self) {
+        if let Some(buf) = self.edit_buffer.as_mut() {
+            buf.current_field_mut().move_right();
         }
     }
 
@@ -94,6 +164,18 @@ impl App {
         }
     }
 
+    pub fn edit_insert(&mut self, ch: char) {
+        if let Some(buf) = self.edit_buffer.as_mut() {
+            buf.current_field_mut().insert_char(ch);
+        }
+    }
+
+    pub fn edit_backspace(&mut self) {
+        if let Some(buf) = self.edit_buffer.as_mut() {
+            buf.current_field_mut().backspace();
+        }
+    }
+
     pub fn save(&self, storage: &impl Storage) {
         if let Err(e) = storage.save_items(&self.todos) {
             eprintln!("Failed to save todos: {}", e);
@@ -106,11 +188,13 @@ impl App {
             let todo = &self.todos[idx];
 
             self.edit_buffer = Some(EditBuffer {
-                description: todo.description.clone(),
-                priority: todo.priority.map_or(String::new(), |p| p.to_string()),
-                due: todo.due.clone().unwrap_or_default(),
-                tags: todo.tags.clone().unwrap_or_default().join(", "),
-                notes: todo.notes.clone().unwrap_or_default(),
+                fields: [
+                    FieldBuffer::new(todo.description.clone()),
+                    FieldBuffer::new(todo.priority.map_or(String::new(), |p| p.to_string())),
+                    FieldBuffer::new(todo.due.clone().unwrap_or_default()),
+                    FieldBuffer::new(todo.tags.clone().unwrap_or_default().join(", ")),
+                    FieldBuffer::new(todo.notes.clone().unwrap_or_default()),
+                ],
                 selected_field: 0,
             });
 
@@ -123,62 +207,42 @@ impl App {
     }
 
     fn commit_edit(&mut self) {
-        if let Some(buffer) = &self.edit_buffer {
+        if let Some(buf) = &self.edit_buffer {
             if let Some(&idx) = self.visual_order.get(self.selected) {
                 let todo = &mut self.todos[idx];
 
-                todo.description = buffer.description.clone();
-                todo.priority = buffer.priority.trim().parse().ok();
-                todo.due = if buffer.due.trim().is_empty() {
-                    None
-                } else {
-                    Some(buffer.due.clone())
+                // 0 ─ Description ---------------------------------------------------
+                todo.description = buf.fields[0].value.clone();
+
+                // 1 ─ Priority (empty ⇒ None) --------------------------------------
+                todo.priority = buf.fields[1].value.trim().parse::<u8>().ok();
+
+                // 2 ─ Due date (empty ⇒ None) --------------------------------------
+                todo.due = match buf.fields[2].value.trim() {
+                    "" => None,
+                    s => Some(s.to_string()),
                 };
-                todo.tags = if buffer.tags.trim().is_empty() {
+
+                // 3 ─ Tags (comma-separated, empty ⇒ None) -------------------------
+                todo.tags = if buf.fields[3].value.trim().is_empty() {
                     None
                 } else {
                     Some(
-                        buffer
-                            .tags
+                        buf.fields[3]
+                            .value
                             .split(',')
                             .map(|s| s.trim().to_string())
+                            .filter(|s| !s.is_empty())
                             .collect(),
                     )
                 };
-                todo.notes = if buffer.notes.trim().is_empty() {
-                    None
-                } else {
-                    Some(buffer.notes.clone())
+
+                // 4 ─ Notes (empty ⇒ None) -----------------------------------------
+                todo.notes = match buf.fields[4].value.trim() {
+                    "" => None,
+                    s => Some(s.to_string()),
                 };
             }
-        }
-    }
-
-    pub fn edit_insert(&mut self, ch: char) {
-        if let Some(buf) = self.edit_buffer.as_mut() {
-            let field = match buf.selected_field {
-                0 => &mut buf.description,
-                1 => &mut buf.priority,
-                2 => &mut buf.due,
-                3 => &mut buf.tags,
-                4 => &mut buf.notes,
-                _ => return,
-            };
-            field.push(ch);
-        }
-    }
-
-    pub fn edit_backspace(&mut self) {
-        if let Some(buf) = self.edit_buffer.as_mut() {
-            let field = match buf.selected_field {
-                0 => &mut buf.description,
-                1 => &mut buf.priority,
-                2 => &mut buf.due,
-                3 => &mut buf.tags,
-                4 => &mut buf.notes,
-                _ => return,
-            };
-            field.pop();
         }
     }
 }

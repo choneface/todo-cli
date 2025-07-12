@@ -1,4 +1,4 @@
-use crate::tui::app::App;
+use crate::tui::app::{App, FieldBuffer};
 
 /// One line/paragraph shown in the edit modal.
 pub struct Input {
@@ -27,22 +27,23 @@ pub struct EditModeModalViewModel {
 
 impl EditModeModalViewModel {
     pub fn from_app(app: &App) -> Self {
-        let buf = app.edit_buffer.as_ref().unwrap();
-
-        let inputs = vec![
-            Input::new("Description", &buf.description, buf.selected_field == 0),
-            Input::new("Priority", &buf.priority, buf.selected_field == 1),
-            Input::new("Due Date", &buf.due, buf.selected_field == 2),
-            Input::new("Tags", &buf.tags, buf.selected_field == 3),
-            Input::new("Notes", &buf.notes, buf.selected_field == 4),
-        ];
-
-        let todo_idx = app.visual_order[app.selected];
-        let done = app.todos[todo_idx].done;
+        let buf = app.edit_buffer.as_ref().expect("missing buffer");
+        let to_input = |title: &str, fb: &FieldBuffer, idx: usize| Input {
+            title: title.to_string(),
+            value: fb.value.clone(),
+            character_index: fb.cursor,
+            selected: idx == buf.selected_field,
+        };
 
         Self {
-            fields: inputs,
-            done,
+            fields: vec![
+                to_input("Description", &buf.fields[0], 0),
+                to_input("Priority", &buf.fields[1], 1),
+                to_input("Due Date", &buf.fields[2], 2),
+                to_input("Tags", &buf.fields[3], 3),
+                to_input("Notes", &buf.fields[4], 4),
+            ],
+            done: app.todos[app.visual_order[app.selected]].done,
             selected_index: buf.selected_field,
         }
     }
