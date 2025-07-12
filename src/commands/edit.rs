@@ -58,6 +58,7 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
                 crate::tui::events::InputEvent::Right => app.right(),
                 crate::tui::events::InputEvent::DisableEditing => app.toggle_mode(),
                 crate::tui::events::InputEvent::Backspace => app.edit_backspace(),
+                crate::tui::events::InputEvent::ToggleDone => app.toggle_done(),
                 crate::tui::events::InputEvent::Char(c) => app.edit_insert(c),
                 _ => {}
             },

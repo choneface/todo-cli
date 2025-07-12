@@ -52,6 +52,7 @@ fn match_key_code_for_edit_mode(code: KeyCode) -> InputEvent {
         KeyCode::Right => InputEvent::Right,
         KeyCode::Esc => InputEvent::DisableEditing,
         KeyCode::Backspace => InputEvent::Backspace,
+        KeyCode::Enter => InputEvent::ToggleDone,
         KeyCode::Char(c) => InputEvent::Char(c),
         _ => InputEvent::None,
     }
