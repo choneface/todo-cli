@@ -8,17 +8,6 @@ pub struct Input {
     pub selected: bool,
 }
 
-impl Input {
-    pub fn new(title: &str, value: &str, selected: bool) -> Self {
-        Self {
-            title: title.to_string(),
-            value: value.to_string(),
-            character_index: value.chars().count(),
-            selected,
-        }
-    }
-}
-
 pub struct EditModeModalViewModel {
     pub fields: Vec<Input>,
     pub done: bool,

@@ -4,7 +4,6 @@ use crate::tui::state::field_buffer::FieldBuffer;
 pub struct EditBuffer {
     pub fields: [FieldBuffer; 5], // 0-4: desc, prio, due, tags, notes
     pub selected_field: usize,
-    pub done: bool,
 }
 
 impl EditBuffer {
@@ -18,7 +17,6 @@ impl EditBuffer {
                 FieldBuffer::new(todo.notes.clone().unwrap_or_default()),
             ],
             selected_field: 0,
-            done: todo.done,
         }
     }
 
@@ -87,7 +85,6 @@ mod tests {
         assert_eq!(buffer.fields[3].cursor, "foo, bar".chars().count());
 
         assert_eq!(buffer.selected_field, 0);
-        assert!(!buffer.done);
     }
 
     #[test]

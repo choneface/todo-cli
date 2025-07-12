@@ -4,7 +4,6 @@ use std::time::Duration;
 use crate::storage::Storage;
 use crate::tui::{app::App, events::poll_input, ui::render};
 
-use crate::tui::app::InputMode;
 use crate::tui::app::InputMode::{Editing, Normal};
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},

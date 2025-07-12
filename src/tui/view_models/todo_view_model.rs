@@ -30,7 +30,6 @@ impl<'a> TodoListViewModel<'a> {
             }
 
             rows.push(Row::Todo {
-                index_in_todos: i,
                 item: todo,
                 is_expanded,
             });
@@ -129,18 +128,13 @@ mod tests {
 
         let vm = TodoListViewModel::from_app(&app);
 
-        // get a list of (index, is_expanded)
+        // get a list of is_expanded
         let flags = vm
             .rows
             .iter()
             .filter_map(|row| {
-                if let Row::Todo {
-                    index_in_todos,
-                    is_expanded,
-                    ..
-                } = row
-                {
-                    Some((*index_in_todos, *is_expanded))
+                if let Row::Todo { is_expanded, .. } = row {
+                    Some(*is_expanded)
                 } else {
                     None
                 }
@@ -148,7 +142,7 @@ mod tests {
             .collect::<Vec<_>>();
 
         // only the second one should be expanded
-        assert_eq!(flags, vec![(0, false), (1, true)]);
+        assert_eq!(flags, vec![false, true]);
     }
 
     #[test]

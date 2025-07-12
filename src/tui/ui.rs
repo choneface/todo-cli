@@ -13,12 +13,10 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
 };
-use std::os::unix::raw::pid_t;
 
 pub enum Row<'a> {
     Header(String),
     Todo {
-        index_in_todos: usize,
         item: &'a TodoItem,
         is_expanded: bool,
     },
