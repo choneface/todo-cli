@@ -1,6 +1,5 @@
 use crate::storage::{Storage, TodoItem};
 use crate::tui::state::edit_buffer::EditBuffer;
-use crate::tui::state::field_buffer::FieldBuffer;
 
 #[derive(PartialEq)]
 pub enum InputMode {
@@ -123,18 +122,7 @@ impl App {
         if self.mode == InputMode::Normal {
             let idx = self.visual_order[self.selected];
             let todo = &self.todos[idx];
-
-            self.edit_buffer = Some(EditBuffer {
-                fields: [
-                    FieldBuffer::new(todo.description.clone()),
-                    FieldBuffer::new(todo.priority.map_or(String::new(), |p| p.to_string())),
-                    FieldBuffer::new(todo.due.clone().unwrap_or_default()),
-                    FieldBuffer::new(todo.tags.clone().unwrap_or_default().join(", ")),
-                    FieldBuffer::new(todo.notes.clone().unwrap_or_default()),
-                ],
-                selected_field: 0,
-            });
-
+            self.edit_buffer = Some(EditBuffer::new(todo));
             self.mode = InputMode::Editing;
         } else {
             self.mode = InputMode::Normal;
@@ -147,33 +135,7 @@ impl App {
         if let Some(buf) = &self.edit_buffer {
             if let Some(&idx) = self.visual_order.get(self.selected) {
                 let todo = &mut self.todos[idx];
-
-                todo.description = buf.fields[0].value.clone();
-
-                todo.priority = buf.fields[1].value.trim().parse::<u8>().ok();
-
-                todo.due = match buf.fields[2].value.trim() {
-                    "" => None,
-                    s => Some(s.to_string()),
-                };
-
-                todo.tags = if buf.fields[3].value.trim().is_empty() {
-                    None
-                } else {
-                    Some(
-                        buf.fields[3]
-                            .value
-                            .split(',')
-                            .map(|s| s.trim().to_string())
-                            .filter(|s| !s.is_empty())
-                            .collect(),
-                    )
-                };
-
-                todo.notes = match buf.fields[4].value.trim() {
-                    "" => None,
-                    s => Some(s.to_string()),
-                };
+                buf.update_todo(todo)
             }
         }
     }
