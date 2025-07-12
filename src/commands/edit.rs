@@ -5,6 +5,7 @@ use crate::storage::Storage;
 use crate::tui::{app::App, events::poll_input, ui::render};
 
 use crate::tui::app::InputMode;
+use crate::tui::app::InputMode::{Editing, Normal};
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
@@ -33,8 +34,11 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
         terminal.draw(|f| render(f, &app))?;
 
         match app.mode {
-            InputMode::Normal => match poll_input(Duration::from_millis(200))? {
-                crate::tui::events::InputEvent::Quit => break,
+            Normal => match poll_input(Duration::from_millis(200), Normal)? {
+                crate::tui::events::InputEvent::Quit => {
+                    app.save(&storage);
+                    break;
+                }
                 crate::tui::events::InputEvent::Down => app.next(),
                 crate::tui::events::InputEvent::Up => app.previous(),
                 crate::tui::events::InputEvent::ToggleDone => {
@@ -47,12 +51,14 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
                 crate::tui::events::InputEvent::EnableEditing => app.toggle_mode(),
                 _ => {}
             },
-            InputMode::Editing => match poll_input(Duration::from_millis(200))? {
+            Editing => match poll_input(Duration::from_millis(200), Editing)? {
                 crate::tui::events::InputEvent::Down => app.next(),
                 crate::tui::events::InputEvent::Up => app.previous(),
                 crate::tui::events::InputEvent::Left => app.left(),
                 crate::tui::events::InputEvent::Right => app.right(),
                 crate::tui::events::InputEvent::DisableEditing => app.toggle_mode(),
+                crate::tui::events::InputEvent::Backspace => app.edit_backspace(),
+                crate::tui::events::InputEvent::Char(c) => app.edit_insert(c),
                 _ => {}
             },
         }
