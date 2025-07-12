@@ -44,14 +44,13 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
                 crate::tui::events::InputEvent::ToggleExpand => {
                     app.toggle_expanded();
                 }
-                crate::tui::events::InputEvent::EnableEditing => app.mode = InputMode::Editing,
-                crate::tui::events::InputEvent::DisableEditing => app.mode = InputMode::Normal,
+                crate::tui::events::InputEvent::EnableEditing => app.toggle_mode(),
                 _ => {}
             },
             InputMode::Editing => match poll_input(Duration::from_millis(200))? {
                 crate::tui::events::InputEvent::Down => app.next(),
                 crate::tui::events::InputEvent::Up => app.previous(),
-                crate::tui::events::InputEvent::DisableEditing => app.mode = InputMode::Normal,
+                crate::tui::events::InputEvent::DisableEditing => app.toggle_mode(),
                 _ => {}
             },
         }

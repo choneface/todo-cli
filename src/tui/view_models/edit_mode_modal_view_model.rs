@@ -1,5 +1,6 @@
 use crate::tui::app::App;
 
+/// One line/paragraph shown in the edit modal.
 pub struct Input {
     pub title: String,
     pub value: String,
@@ -8,11 +9,11 @@ pub struct Input {
 }
 
 impl Input {
-    pub fn new(title: &String, value: &String, selected: bool) -> Self {
+    pub fn new(title: &str, value: &str, selected: bool) -> Self {
         Self {
-            title: title.clone(),
-            value: value.clone(),
-            character_index: value.len(),
+            title: title.to_string(),
+            value: value.to_string(),
+            character_index: value.chars().count(),
             selected,
         }
     }
@@ -26,41 +27,23 @@ pub struct EditModeModalViewModel {
 
 impl EditModeModalViewModel {
     pub fn from_app(app: &App) -> Self {
-        let idx = app.visual_order.get(app.selected).unwrap();
-        let todo = app.todos.get(*idx).unwrap().clone();
+        let buf = app.edit_buffer.as_ref().unwrap();
 
         let inputs = vec![
-            Input::new(
-                &"Description".to_string(),
-                &todo.description,
-                app.selected_edit_field == 0,
-            ),
-            Input::new(
-                &"Priority".to_string(),
-                &todo.priority.unwrap_or(99).to_string(),
-                app.selected_edit_field == 1,
-            ),
-            Input::new(
-                &"Due Date".to_string(),
-                &todo.due.unwrap_or(String::new()),
-                app.selected_edit_field == 2,
-            ),
-            Input::new(
-                &"Tags".to_string(),
-                &todo.tags.unwrap_or(vec![]).join(", "),
-                app.selected_edit_field == 3,
-            ),
-            Input::new(
-                &"Notes".to_string(),
-                &todo.notes.unwrap_or(String::new()),
-                app.selected_edit_field == 4,
-            ),
+            Input::new("Description", &buf.description, buf.selected_field == 0),
+            Input::new("Priority", &buf.priority, buf.selected_field == 1),
+            Input::new("Due Date", &buf.due, buf.selected_field == 2),
+            Input::new("Tags", &buf.tags, buf.selected_field == 3),
+            Input::new("Notes", &buf.notes, buf.selected_field == 4),
         ];
+
+        let todo_idx = app.visual_order[app.selected];
+        let done = app.todos[todo_idx].done;
 
         Self {
             fields: inputs,
-            done: todo.done,
-            selected_index: app.selected_edit_field,
+            done,
+            selected_index: buf.selected_field,
         }
     }
 }

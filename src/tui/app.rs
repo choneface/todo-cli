@@ -6,13 +6,22 @@ pub enum InputMode {
     Editing,
 }
 
+pub struct EditBuffer {
+    pub description: String,
+    pub priority: String,
+    pub due: String,
+    pub tags: String,
+    pub notes: String,
+    pub selected_field: usize,
+}
+
 pub struct App {
     pub todos: Vec<TodoItem>,
     pub visual_order: Vec<usize>,
     pub selected: usize,
-    pub selected_edit_field: usize,
     pub expanded: Option<usize>,
     pub mode: InputMode,
+    pub edit_buffer: Option<EditBuffer>,
 }
 
 impl App {
@@ -29,9 +38,9 @@ impl App {
             todos,
             visual_order,
             selected: 0,
-            selected_edit_field: 0,
             expanded: None,
             mode: InputMode::Normal,
+            edit_buffer: None,
         }
     }
 
@@ -43,8 +52,10 @@ impl App {
                 }
             }
             InputMode::Editing => {
-                if self.selected_edit_field + 1 < 5 {
-                    self.selected_edit_field += 1;
+                if let Some(buf) = self.edit_buffer.as_mut() {
+                    if buf.selected_field + 1 < 5 {
+                        buf.selected_field += 1;
+                    }
                 }
             }
         }
@@ -58,8 +69,10 @@ impl App {
                 }
             }
             InputMode::Editing => {
-                if self.selected_edit_field > 0 {
-                    self.selected_edit_field -= 1;
+                if let Some(buf) = self.edit_buffer.as_mut() {
+                    if buf.selected_field > 0 {
+                        buf.selected_field -= 1;
+                    }
                 }
             }
         }
@@ -89,9 +102,83 @@ impl App {
 
     pub fn toggle_mode(&mut self) {
         if self.mode == InputMode::Normal {
+            let idx = self.visual_order[self.selected];
+            let todo = &self.todos[idx];
+
+            self.edit_buffer = Some(EditBuffer {
+                description: todo.description.clone(),
+                priority: todo.priority.map_or(String::new(), |p| p.to_string()),
+                due: todo.due.clone().unwrap_or_default(),
+                tags: todo.tags.clone().unwrap_or_default().join(", "),
+                notes: todo.notes.clone().unwrap_or_default(),
+                selected_field: 0,
+            });
+
             self.mode = InputMode::Editing;
         } else {
             self.mode = InputMode::Normal;
+            self.commit_edit();
+            self.edit_buffer = None;
+        }
+    }
+
+    fn commit_edit(&mut self) {
+        if let Some(buffer) = &self.edit_buffer {
+            if let Some(&idx) = self.visual_order.get(self.selected) {
+                let todo = &mut self.todos[idx];
+
+                todo.description = buffer.description.clone();
+                todo.priority = buffer.priority.trim().parse().ok();
+                todo.due = if buffer.due.trim().is_empty() {
+                    None
+                } else {
+                    Some(buffer.due.clone())
+                };
+                todo.tags = if buffer.tags.trim().is_empty() {
+                    None
+                } else {
+                    Some(
+                        buffer
+                            .tags
+                            .split(',')
+                            .map(|s| s.trim().to_string())
+                            .collect(),
+                    )
+                };
+                todo.notes = if buffer.notes.trim().is_empty() {
+                    None
+                } else {
+                    Some(buffer.notes.clone())
+                };
+            }
+        }
+    }
+
+    pub fn edit_insert(&mut self, ch: char) {
+        if let Some(buf) = self.edit_buffer.as_mut() {
+            let field = match buf.selected_field {
+                0 => &mut buf.description,
+                1 => &mut buf.priority,
+                2 => &mut buf.due,
+                3 => &mut buf.tags,
+                4 => &mut buf.notes,
+                _ => return,
+            };
+            field.push(ch);
+        }
+    }
+
+    pub fn edit_backspace(&mut self) {
+        if let Some(buf) = self.edit_buffer.as_mut() {
+            let field = match buf.selected_field {
+                0 => &mut buf.description,
+                1 => &mut buf.priority,
+                2 => &mut buf.due,
+                3 => &mut buf.tags,
+                4 => &mut buf.notes,
+                _ => return,
+            };
+            field.pop();
         }
     }
 }
