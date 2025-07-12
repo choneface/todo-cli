@@ -4,6 +4,7 @@ use crate::tui::app::InputMode::Editing;
 use crate::tui::view_models::edit_mode_modal_view_model::{EditModeModalViewModel, Input};
 use crate::tui::view_models::todo_view_model::TodoListViewModel;
 use ratatui::layout::{Flex, Margin, Rect};
+use ratatui::prelude::Color;
 use ratatui::widgets::Clear;
 use ratatui::{
     Frame,
@@ -77,7 +78,12 @@ pub fn render(f: &mut Frame, app: &App) {
 }
 
 fn render_field<'a>(input: &Input) -> Paragraph<'a> {
-    Paragraph::new(input.value.clone()).block(Block::bordered().title(input.title.clone()))
+    Paragraph::new(input.value.clone())
+        .block(Block::bordered().title(input.title.clone()))
+        .style(match input.selected {
+            true => Style::default().fg(Color::Yellow),
+            false => Style::default().fg(Color::White),
+        })
 }
 fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);

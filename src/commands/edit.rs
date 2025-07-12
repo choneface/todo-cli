@@ -49,6 +49,8 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
                 _ => {}
             },
             InputMode::Editing => match poll_input(Duration::from_millis(200))? {
+                crate::tui::events::InputEvent::Down => app.next(),
+                crate::tui::events::InputEvent::Up => app.previous(),
                 crate::tui::events::InputEvent::DisableEditing => app.mode = InputMode::Normal,
                 _ => {}
             },

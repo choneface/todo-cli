@@ -10,6 +10,7 @@ pub struct App {
     pub todos: Vec<TodoItem>,
     pub visual_order: Vec<usize>,
     pub selected: usize,
+    pub selected_edit_field: usize,
     pub expanded: Option<usize>,
     pub mode: InputMode,
 }
@@ -28,20 +29,39 @@ impl App {
             todos,
             visual_order,
             selected: 0,
+            selected_edit_field: 0,
             expanded: None,
             mode: InputMode::Normal,
         }
     }
 
     pub fn next(&mut self) {
-        if self.selected + 1 < self.visual_order.len() {
-            self.selected += 1;
+        match self.mode {
+            InputMode::Normal => {
+                if self.selected + 1 < self.visual_order.len() {
+                    self.selected += 1;
+                }
+            }
+            InputMode::Editing => {
+                if self.selected_edit_field + 1 < 5 {
+                    self.selected_edit_field += 1;
+                }
+            }
         }
     }
 
     pub fn previous(&mut self) {
-        if self.selected > 0 {
-            self.selected -= 1;
+        match self.mode {
+            InputMode::Normal => {
+                if self.selected > 0 {
+                    self.selected -= 1;
+                }
+            }
+            InputMode::Editing => {
+                if self.selected_edit_field > 0 {
+                    self.selected_edit_field -= 1;
+                }
+            }
         }
     }
 

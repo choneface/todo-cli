@@ -84,6 +84,7 @@ mod tests {
             todos,
             visual_order: vec![0, 1, 2, 3],
             selected: 1, // select the second tod0
+            selected_edit_field: 0,
             expanded: Some(1),
             mode: InputMode::Normal,
         };
@@ -121,6 +122,7 @@ mod tests {
             todos,
             visual_order: vec![0, 1],
             selected: 0,
+            selected_edit_field: 0,
             expanded: Some(1),
             mode: InputMode::Normal,
         };
@@ -155,6 +157,7 @@ mod tests {
             todos: vec![],
             visual_order: vec![],
             selected: 0,
+            selected_edit_field: 0,
             expanded: None,
             mode: InputMode::Normal,
         };
