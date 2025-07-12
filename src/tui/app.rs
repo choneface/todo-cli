@@ -135,8 +135,24 @@ impl App {
         if let Some(buf) = &self.edit_buffer {
             if let Some(&idx) = self.visual_order.get(self.selected) {
                 let todo = &mut self.todos[idx];
-                buf.update_todo(todo)
+                buf.update_todo(todo);
+                self.recompute_visual_order(idx)
             }
+        }
+    }
+
+    fn recompute_visual_order(&mut self, edited_idx: usize) {
+        // Re-sort
+        let mut pairs: Vec<(usize, &TodoItem)> = self.todos.iter().enumerate().collect();
+        pairs.sort_by_key(|(_, t)| t.priority.unwrap_or(99));
+
+        self.visual_order = pairs.into_iter().map(|(i, _)| i).collect();
+
+        // Where did the edited tod0 land?
+        if let Some(pos) = self.visual_order.iter().position(|&i| i == edited_idx) {
+            self.selected = pos;
+        } else {
+            self.selected = 0; // fallback (shouldn’t happen)
         }
     }
 }
