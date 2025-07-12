@@ -1,6 +1,7 @@
 use crate::storage::TodoItem;
 use crate::tui::app::App;
 use crate::tui::app::InputMode::Editing;
+use crate::tui::view_models::edit_mode_modal_view_model::{EditModeModalViewModel, Input};
 use crate::tui::view_models::todo_view_model::TodoListViewModel;
 use ratatui::layout::{Flex, Margin, Rect};
 use ratatui::widgets::Clear;
@@ -65,22 +66,19 @@ pub fn render(f: &mut Frame, app: &App) {
             Span::raw("[esc] To save and exit"),
         ]))
         .block(Block::default());
-        let description =
-            Paragraph::new("This is text").block(Block::bordered().title("Description"));
-        let priority =
-            Paragraph::new("This is priority message").block(Block::bordered().title("Priority"));
-        let due = Paragraph::new("This is due message").block(Block::bordered().title("Due"));
-        let tags = Paragraph::new("This is tags message").block(Block::bordered().title("Tags"));
-        let notes = Paragraph::new("This is notes message").block(Block::bordered().title("Notes"));
         f.render_widget(header, inner_chunks[0]);
-        f.render_widget(description, inner_chunks[1]);
-        f.render_widget(priority, inner_chunks[2]);
-        f.render_widget(due, inner_chunks[3]);
-        f.render_widget(tags, inner_chunks[4]);
-        f.render_widget(notes, inner_chunks[5]);
+
+        let view_model = EditModeModalViewModel::from_app(&app);
+        let fields: Vec<Paragraph> = view_model.fields.iter().map(render_field).collect();
+        for (i, field) in fields.iter().enumerate() {
+            f.render_widget(field, inner_chunks[i + 1])
+        }
     }
 }
 
+fn render_field<'a>(input: &Input) -> Paragraph<'a> {
+    Paragraph::new(input.value.clone()).block(Block::bordered().title(input.title.clone()))
+}
 fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
     let horizontal = Layout::horizontal([Constraint::Percentage(percent_x)]).flex(Flex::Center);

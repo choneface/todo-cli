@@ -1,39 +1,47 @@
 use crate::tui::app::App;
 
-struct Input {
-    input: String,
-    character_index: usize,
+pub struct Input {
+    pub title: String,
+    pub value: String,
+    pub character_index: usize,
 }
 
 impl Input {
-    pub fn new(string: &String) -> Self {
+    pub fn new(title: &String, value: &String) -> Self {
         Self {
-            input: string.clone(),
-            character_index: string.len() - 1,
+            title: title.clone(),
+            value: value.clone(),
+            character_index: value.len(),
         }
     }
 }
 
 pub struct EditModeModalViewModel {
-    fields: Vec<Input>,
-    done: bool,
+    pub fields: Vec<Input>,
+    pub done: bool,
+    pub selected_index: usize,
 }
 
 impl EditModeModalViewModel {
     pub fn from_app(app: &App) -> Self {
-        let todo = app.todos.get(app.selected).unwrap().clone();
+        let idx = app.visual_order.get(app.selected).unwrap();
+        let todo = app.todos.get(*idx).unwrap().clone();
 
         let inputs = vec![
-            Input::new(&todo.description),
-            Input::new(&todo.priority.unwrap_or(99).to_string()),
-            Input::new(&todo.due.unwrap_or(String::new())),
-            Input::new(&todo.tags.unwrap_or(vec![]).join(", ")),
-            Input::new(&todo.notes.unwrap_or(String::new())),
+            Input::new(&"Description".to_string(), &todo.description),
+            Input::new(
+                &"Priority".to_string(),
+                &todo.priority.unwrap_or(99).to_string(),
+            ),
+            Input::new(&"Due Date".to_string(), &todo.due.unwrap_or(String::new())),
+            Input::new(&"Tags".to_string(), &todo.tags.unwrap_or(vec![]).join(", ")),
+            Input::new(&"Notes".to_string(), &todo.notes.unwrap_or(String::new())),
         ];
 
         Self {
             fields: inputs,
             done: todo.done,
+            selected_index: 0,
         }
     }
 }
