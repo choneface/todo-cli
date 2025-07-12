@@ -74,6 +74,11 @@ pub fn render(f: &mut Frame, app: &App) {
         for (i, field) in fields.iter().enumerate() {
             f.render_widget(field, inner_chunks[i + 1])
         }
+
+        let selected_input = view_model.fields.get(view_model.selected_index).unwrap();
+        let x = inner_area.x + selected_input.character_index as u16 + 1;
+        let y = inner_area.y + 3 + (3 * view_model.selected_index as u16);
+        f.set_cursor(x, y)
     }
 }
 
