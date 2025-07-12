@@ -3,7 +3,7 @@ use crate::tui::app::App;
 use crate::tui::app::InputMode::Editing;
 use crate::tui::view_models::edit_mode_modal_view_model::{EditModeModalViewModel, Input};
 use crate::tui::view_models::todo_view_model::TodoListViewModel;
-use ratatui::layout::{Flex, Margin, Rect};
+use ratatui::layout::{Alignment, Flex, Margin, Rect};
 use ratatui::prelude::Color;
 use ratatui::widgets::Clear;
 use ratatui::{
@@ -58,13 +58,16 @@ pub fn render(f: &mut Frame, app: &App) {
             Constraint::Length(3),
             Constraint::Length(3),
             Constraint::Length(8),
+            Constraint::Length(1),
+            Constraint::Length(2),
         ])
         .split(inner_area);
 
         let header = Paragraph::new(Line::from(vec![
-            Span::raw("[↑/↓] Move    "),
-            Span::raw("[i] Edit field    "),
-            Span::raw("[esc] To save and exit"),
+            Span::raw("[↑/↓] Move field    "),
+            Span::raw("[←/→] Move cursor    "),
+            Span::raw("[esc] Save & exit    "),
+            Span::raw("[⏎] Toggle Done    "),
         ]))
         .block(Block::default());
         f.render_widget(header, inner_chunks[0]);
@@ -74,6 +77,23 @@ pub fn render(f: &mut Frame, app: &App) {
         for (i, field) in fields.iter().enumerate() {
             f.render_widget(field, inner_chunks[i + 1])
         }
+
+        let status_span = if view_model.done {
+            Span::styled(
+                "Done",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            )
+        } else {
+            Span::styled(
+                "Not done",
+                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+            )
+        };
+
+        let status = Paragraph::new(Line::from(vec![status_span])).alignment(Alignment::Center);
+        f.render_widget(status, inner_chunks[7]);
 
         let selected_input = view_model.fields.get(view_model.selected_index).unwrap();
         let x = inner_area.x + selected_input.character_index as u16 + 1;
