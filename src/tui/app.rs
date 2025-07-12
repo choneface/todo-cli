@@ -1,7 +1,7 @@
 use crate::storage::{Storage, TodoItem};
 use crate::tui::state::edit_buffer::EditBuffer;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum InputMode {
     Normal,
     Editing,
@@ -215,6 +215,110 @@ mod tests {
             .returning(|_| Ok(()));
 
         app.save(&storage)
+    }
+
+    #[test]
+    fn toggle_mode_enters_and_exits_editing() {
+        let mut app = App::new(vec![make_todo("x")]);
+
+        // enter
+        app.toggle_mode();
+        assert_eq!(app.mode, InputMode::Editing);
+        assert!(app.edit_buffer.is_some());
+        assert_eq!(app.edit_buffer.as_ref().unwrap().selected_field, 0);
+
+        // exit -> buffer cleared
+        app.toggle_mode();
+        assert_eq!(app.mode, InputMode::Normal);
+        assert!(app.edit_buffer.is_none());
+    }
+
+    #[test]
+    fn editing_next_previous_change_selected_field_and_reset_cursor() {
+        let mut app = App::new(vec![make_todo("desc")]); // description = "desc"
+        app.toggle_mode();
+
+        app.left();
+        let buf = app.edit_buffer.as_ref().unwrap();
+        assert_eq!(buf.selected_field, 0);
+        // the cursor should not be at the end anymore
+        assert_ne!(buf.fields[0].cursor, buf.fields[0].value.chars().count());
+
+        app.next();
+        let buf = app.edit_buffer.as_ref().unwrap();
+        assert_eq!(buf.selected_field, 1);
+        // the previous field should have had its cursor set back to end
+        assert_eq!(buf.fields[0].cursor, buf.fields[0].value.chars().count());
+    }
+
+    #[test]
+    fn left_and_right_move_cursor_within_field() {
+        let mut app = App::new(vec![make_todo("abc")]);
+        app.toggle_mode();
+
+        {
+            let buf = app.edit_buffer.as_mut().unwrap();
+            buf.current_field_mut().move_left(); // cursor -> 2
+        }
+
+        app.left(); // cursor -> 1
+        assert_eq!(app.edit_buffer.as_ref().unwrap().fields[0].cursor, 1);
+
+        app.right(); // cursor -> 2
+        assert_eq!(app.edit_buffer.as_ref().unwrap().fields[0].cursor, 2);
+    }
+
+    #[test]
+    fn insert_and_backspace_modify_field_and_cursor() {
+        let mut app = App::new(vec![make_todo("ac")]);
+        app.toggle_mode();
+
+        {
+            let buf = app.edit_buffer.as_mut().unwrap();
+            buf.current_field_mut().move_left(); // cursor after 'a'
+        }
+
+        app.edit_insert('b'); // "abc"
+        assert_eq!(app.edit_buffer.as_ref().unwrap().fields[0].value, "abc");
+        assert_eq!(app.edit_buffer.as_ref().unwrap().fields[0].cursor, 2);
+
+        app.edit_backspace(); // delete 'b' -> "ac"
+        assert_eq!(app.edit_buffer.as_ref().unwrap().fields[0].value, "ac");
+        assert_eq!(app.edit_buffer.as_ref().unwrap().fields[0].cursor, 1);
+    }
+
+    #[test]
+    fn commit_edit_updates_todo_and_resorts_by_priority() {
+        // Two todos with priorities None (99) and 1
+        let mut app = App::new(vec![
+            todo_with("a", None),    // visual idx 1 after sort
+            todo_with("b", Some(1)), // visual idx 0
+        ]);
+        // Select the low-priority tod0 (visual index 1)
+        app.selected = 1;
+
+        // Enter edit mode and change its priority to 0
+        app.toggle_mode();
+        {
+            let buf = app.edit_buffer.as_mut().unwrap();
+            buf.fields[1].value = "0".into(); // priority field
+        }
+        app.toggle_mode(); // exits Editing -> commits & resorts
+
+        // After resort, the edited tod0 should now be at visual index 0
+        assert_eq!(app.selected, 0);
+        assert_eq!(app.todos[0].priority, Some(0));
+    }
+
+    fn todo_with(desc: &str, prio: Option<u8>) -> TodoItem {
+        TodoItem {
+            description: desc.into(),
+            priority: prio,
+            due: None,
+            tags: None,
+            notes: None,
+            done: false,
+        }
     }
 
     fn make_todo(description: &str) -> TodoItem {
