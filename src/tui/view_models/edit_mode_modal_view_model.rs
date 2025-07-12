@@ -1,6 +1,6 @@
-use crate::tui::app::{App, FieldBuffer};
+use crate::tui::app::App;
+use crate::tui::state::field_buffer::FieldBuffer;
 
-/// One line/paragraph shown in the edit modal.
 pub struct Input {
     pub title: String,
     pub value: String,

@@ -1,74 +1,11 @@
 use crate::storage::{Storage, TodoItem};
+use crate::tui::state::edit_buffer::EditBuffer;
+use crate::tui::state::field_buffer::FieldBuffer;
 
 #[derive(PartialEq)]
 pub enum InputMode {
     Normal,
     Editing,
-}
-
-#[derive(Clone)]
-pub struct FieldBuffer {
-    pub value: String,
-    pub cursor: usize,
-}
-
-impl FieldBuffer {
-    pub fn new(value: String) -> Self {
-        let cursor = value.chars().count();
-        Self { value, cursor }
-    }
-
-    fn byte_index(&self) -> usize {
-        self.value
-            .char_indices()
-            .map(|(i, _)| i)
-            .nth(self.cursor)
-            .unwrap_or(self.value.len())
-    }
-
-    fn clamp(&self, pos: usize) -> usize {
-        pos.clamp(0, self.value.chars().count())
-    }
-
-    pub fn move_left(&mut self) {
-        self.cursor = self.clamp(self.cursor.saturating_sub(1));
-    }
-
-    pub fn move_right(&mut self) {
-        self.cursor = self.clamp(self.cursor.saturating_add(1));
-    }
-
-    pub fn reset_cursor(&mut self) {
-        self.cursor = self.value.chars().count();
-    }
-
-    pub fn insert_char(&mut self, ch: char) {
-        let idx = self.byte_index();
-        self.value.insert(idx, ch);
-        self.move_right();
-    }
-
-    pub fn backspace(&mut self) {
-        if self.cursor == 0 {
-            return;
-        }
-        let left = self.cursor - 1;
-        let head = self.value.chars().take(left);
-        let tail = self.value.chars().skip(self.cursor);
-        self.value = head.chain(tail).collect();
-        self.move_left();
-    }
-}
-
-pub struct EditBuffer {
-    pub fields: [FieldBuffer; 5], // 0-4: desc, prio, due, tags, notes
-    pub selected_field: usize,
-}
-
-impl EditBuffer {
-    pub fn current_field_mut(&mut self) -> &mut FieldBuffer {
-        &mut self.fields[self.selected_field]
-    }
 }
 
 pub struct App {
@@ -211,19 +148,15 @@ impl App {
             if let Some(&idx) = self.visual_order.get(self.selected) {
                 let todo = &mut self.todos[idx];
 
-                // 0 ─ Description ---------------------------------------------------
                 todo.description = buf.fields[0].value.clone();
 
-                // 1 ─ Priority (empty ⇒ None) --------------------------------------
                 todo.priority = buf.fields[1].value.trim().parse::<u8>().ok();
 
-                // 2 ─ Due date (empty ⇒ None) --------------------------------------
                 todo.due = match buf.fields[2].value.trim() {
                     "" => None,
                     s => Some(s.to_string()),
                 };
 
-                // 3 ─ Tags (comma-separated, empty ⇒ None) -------------------------
                 todo.tags = if buf.fields[3].value.trim().is_empty() {
                     None
                 } else {
@@ -237,7 +170,6 @@ impl App {
                     )
                 };
 
-                // 4 ─ Notes (empty ⇒ None) -----------------------------------------
                 todo.notes = match buf.fields[4].value.trim() {
                     "" => None,
                     s => Some(s.to_string()),
