@@ -9,7 +9,7 @@ Manage your tasks efficiently from your terminal — add, list, and mark todos w
 ## 📦 Installation
 
 ```bash
-cargo install todo-cli
+cargo install crix-todo
 ```
 
 ---
@@ -90,6 +90,4 @@ cargo run -- add "Test the CLI"
 
 ## 🔗 Coming Soon
 
-- Crates.io install instructions
-- Cross-platform binaries
-- Optional Homebrew tap
+- Enhanced todo view
