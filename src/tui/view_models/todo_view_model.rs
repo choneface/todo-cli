@@ -1,5 +1,5 @@
 use crate::tui::app::App;
-use crate::tui::ui::Row;
+use crate::tui::views::todo_list::Row;
 
 pub struct TodoListViewModel<'a> {
     pub rows: Vec<Row<'a>>,

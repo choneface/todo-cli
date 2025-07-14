@@ -1,10 +1,18 @@
+use crate::storage::TodoItem;
 use crate::tui::app::App;
-use crate::tui::ui::Row;
 use crate::tui::view_models::todo_view_model::TodoListViewModel;
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::prelude::{Line, Modifier, Span, Style};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
+
+pub enum Row<'a> {
+    Header(String),
+    Todo {
+        item: &'a TodoItem,
+        is_expanded: bool,
+    },
+}
 
 pub fn render(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
