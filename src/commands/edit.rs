@@ -4,6 +4,7 @@ use std::time::Duration;
 use crate::storage::Storage;
 use crate::tui::{app::App, events::poll_input, ui::render};
 
+use crate::tui::app::InputMode::{Editing, Normal};
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     execute,
@@ -31,18 +32,35 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
     loop {
         terminal.draw(|f| render(f, &app))?;
 
-        match poll_input(Duration::from_millis(200))? {
-            crate::tui::events::InputEvent::Quit => break,
-            crate::tui::events::InputEvent::Down => app.next(),
-            crate::tui::events::InputEvent::Up => app.previous(),
-            crate::tui::events::InputEvent::ToggleDone => {
-                app.toggle_done();
-                app.save(&storage);
-            }
-            crate::tui::events::InputEvent::ToggleExpand => {
-                app.toggle_expanded();
-            }
-            _ => {}
+        match app.mode {
+            Normal => match poll_input(Duration::from_millis(200), Normal)? {
+                crate::tui::events::InputEvent::Quit => {
+                    app.save(&storage);
+                    break;
+                }
+                crate::tui::events::InputEvent::Down => app.next(),
+                crate::tui::events::InputEvent::Up => app.previous(),
+                crate::tui::events::InputEvent::ToggleDone => {
+                    app.toggle_done();
+                    app.save(&storage);
+                }
+                crate::tui::events::InputEvent::ToggleExpand => {
+                    app.toggle_expanded();
+                }
+                crate::tui::events::InputEvent::EnableEditing => app.toggle_mode(),
+                _ => {}
+            },
+            Editing => match poll_input(Duration::from_millis(200), Editing)? {
+                crate::tui::events::InputEvent::Down => app.next(),
+                crate::tui::events::InputEvent::Up => app.previous(),
+                crate::tui::events::InputEvent::Left => app.left(),
+                crate::tui::events::InputEvent::Right => app.right(),
+                crate::tui::events::InputEvent::DisableEditing => app.toggle_mode(),
+                crate::tui::events::InputEvent::Backspace => app.edit_backspace(),
+                crate::tui::events::InputEvent::ToggleDone => app.toggle_done(),
+                crate::tui::events::InputEvent::Char(c) => app.edit_insert(c),
+                _ => {}
+            },
         }
     }
 

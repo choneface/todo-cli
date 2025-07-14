@@ -1,5 +1,5 @@
 use crate::tui::app::App;
-use crate::tui::ui::Row;
+use crate::tui::views::todo_list::Row;
 
 pub struct TodoListViewModel<'a> {
     pub rows: Vec<Row<'a>>,
@@ -30,7 +30,6 @@ impl<'a> TodoListViewModel<'a> {
             }
 
             rows.push(Row::Todo {
-                index_in_todos: i,
                 item: todo,
                 is_expanded,
             });
@@ -47,7 +46,7 @@ impl<'a> TodoListViewModel<'a> {
 mod tests {
     use super::*;
     use crate::storage::TodoItem;
-    use crate::tui::app::App;
+    use crate::tui::app::{App, InputMode};
 
     fn make_todo(
         description: &str,
@@ -85,6 +84,8 @@ mod tests {
             visual_order: vec![0, 1, 2, 3],
             selected: 1, // select the second tod0
             expanded: Some(1),
+            mode: InputMode::Normal,
+            edit_buffer: None,
         };
 
         let vm = TodoListViewModel::from_app(&app);
@@ -121,22 +122,19 @@ mod tests {
             visual_order: vec![0, 1],
             selected: 0,
             expanded: Some(1),
+            mode: InputMode::Normal,
+            edit_buffer: None,
         };
 
         let vm = TodoListViewModel::from_app(&app);
 
-        // get a list of (index, is_expanded)
+        // get a list of is_expanded
         let flags = vm
             .rows
             .iter()
             .filter_map(|row| {
-                if let Row::Todo {
-                    index_in_todos,
-                    is_expanded,
-                    ..
-                } = row
-                {
-                    Some((*index_in_todos, *is_expanded))
+                if let Row::Todo { is_expanded, .. } = row {
+                    Some(*is_expanded)
                 } else {
                     None
                 }
@@ -144,7 +142,7 @@ mod tests {
             .collect::<Vec<_>>();
 
         // only the second one should be expanded
-        assert_eq!(flags, vec![(0, false), (1, true)]);
+        assert_eq!(flags, vec![false, true]);
     }
 
     #[test]
@@ -154,6 +152,8 @@ mod tests {
             visual_order: vec![],
             selected: 0,
             expanded: None,
+            mode: InputMode::Normal,
+            edit_buffer: None,
         };
 
         let vm = TodoListViewModel::from_app(&app);
