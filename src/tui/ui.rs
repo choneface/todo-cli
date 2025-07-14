@@ -42,13 +42,11 @@ pub fn render(f: &mut Frame, app: &App) {
         f.render_widget(Clear, outer_area);
         f.render_widget(outer_block, outer_area);
 
-        // Inset area to avoid overlapping with the border and title
         let inner_area = outer_area.inner(&Margin {
             vertical: 1,
             horizontal: 1,
         });
 
-        // Layout inside the inset area
         let inner_chunks = Layout::vertical([
             Constraint::Length(2),
             Constraint::Length(3),
@@ -61,43 +59,56 @@ pub fn render(f: &mut Frame, app: &App) {
         ])
         .split(inner_area);
 
-        let header = Paragraph::new(Line::from(vec![
-            Span::raw("[↑/↓] Move field    "),
-            Span::raw("[←/→] Move cursor    "),
-            Span::raw("[esc] Save & exit    "),
-            Span::raw("[⏎] Toggle Done    "),
-        ]))
-        .block(Block::default());
-        f.render_widget(header, inner_chunks[0]);
-
         let view_model = EditModeModalViewModel::from_app(&app);
-        let fields: Vec<Paragraph> = view_model.fields.iter().map(render_field).collect();
-        for (i, field) in fields.iter().enumerate() {
-            f.render_widget(field, inner_chunks[i + 1])
-        }
-
-        let status_span = if view_model.done {
-            Span::styled(
-                "Done",
-                Style::default()
-                    .fg(Color::Green)
-                    .add_modifier(Modifier::BOLD),
-            )
-        } else {
-            Span::styled(
-                "Not done",
-                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-            )
-        };
-
-        let status = Paragraph::new(Line::from(vec![status_span])).alignment(Alignment::Center);
-        f.render_widget(status, inner_chunks[7]);
-
-        let selected_input = view_model.fields.get(view_model.selected_index).unwrap();
-        let x = inner_area.x + selected_input.character_index as u16 + 1;
-        let y = inner_area.y + 3 + (3 * view_model.selected_index as u16);
-        f.set_cursor(x, y)
+        render_edit_header(f, inner_chunks[0]);
+        render_edit_fields(f, inner_chunks[1..6].to_vec(), &view_model);
+        render_status_span(f, inner_chunks[7], view_model.done);
+        render_cursor(f, inner_area, &view_model)
     }
+}
+
+fn render_edit_header(f: &mut Frame, area: Rect) {
+    let header = Paragraph::new(Line::from(vec![
+        Span::raw("[↑/↓] Move field    "),
+        Span::raw("[←/→] Move cursor    "),
+        Span::raw("[esc] Save & exit    "),
+        Span::raw("[⏎] Toggle Done    "),
+    ]))
+    .block(Block::default());
+    f.render_widget(header, area);
+}
+
+fn render_edit_fields(f: &mut Frame, chunks: Vec<Rect>, view_model: &EditModeModalViewModel) {
+    let fields: Vec<Paragraph> = view_model.fields.iter().map(render_field).collect();
+    for (i, field) in fields.iter().enumerate() {
+        f.render_widget(field, chunks[i])
+    }
+}
+
+fn render_status_span(f: &mut Frame, area: Rect, is_done: bool) {
+    let status_span = if is_done {
+        Span::styled(
+            "Done",
+            Style::default()
+                .fg(Color::Green)
+                .add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(
+            "Not done",
+            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+        )
+    };
+
+    let status = Paragraph::new(Line::from(vec![status_span])).alignment(Alignment::Center);
+    f.render_widget(status, area);
+}
+
+fn render_cursor(f: &mut Frame, area: Rect, view_model: &EditModeModalViewModel) {
+    let selected_input = view_model.fields.get(view_model.selected_index).unwrap();
+    let x = area.x + selected_input.character_index as u16 + 1;
+    let y = area.y + 3 + (3 * view_model.selected_index as u16);
+    f.set_cursor(x, y)
 }
 
 fn render_field<'a>(input: &Input) -> Paragraph<'a> {
