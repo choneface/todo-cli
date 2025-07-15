@@ -186,8 +186,9 @@ impl App {
     pub fn demote_selected(&mut self) {
         let idx = self.visual_order[self.selected];
         let new_priority = match self.todos[idx].priority {
-            Some(p) if p < 99 => Some(p + 1),
-            _ => Some(99),
+            // 99 == None
+            Some(p) if p < 98 => Some(p + 1),
+            _ => None,
         };
 
         self.todos[idx].priority = new_priority;
@@ -527,20 +528,20 @@ mod tests {
 
         app.selected = 1;
         app.demote_selected();
-        assert_eq!(app.todos[app.visual_order[1]].priority, Some(99));
+        assert_eq!(app.todos[app.visual_order[1]].priority, None);
 
-        // demoting again should stay clamped at 99
         app.demote_selected();
-        assert_eq!(app.todos[app.visual_order[1]].priority, Some(99));
+        // stays None
+        assert_eq!(app.todos[app.visual_order[1]].priority, None);
     }
 
     #[test]
-    fn demote_selected_sets_priority_to_99_if_none() {
+    fn demote_selected_keeps_none_priority() {
         let mut app = App::new(vec![todo_with("a", None)]);
 
         app.selected = 0;
         app.demote_selected();
-        assert_eq!(app.todos[app.visual_order[0]].priority, Some(99));
+        assert_eq!(app.todos[app.visual_order[0]].priority, None);
     }
 
     fn todo_with(desc: &str, prio: Option<u8>) -> TodoItem {
