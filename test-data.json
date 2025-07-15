@@ -1,0 +1,107 @@
+[
+  {
+    "description": "Buy groceries",
+    "priority": 2,
+    "due": "2025-07-15",
+    "tags": [
+      "personal",
+      "errands"
+    ],
+    "done": false,
+    "notes": "Don't forget eggs and oat milk"
+  },
+  {
+    "description": "Finish TUI refactor",
+    "priority": 1,
+    "due": null,
+    "tags": [
+      "dev",
+      "tui"
+    ],
+    "done": false,
+    "notes": "Test on small terminals"
+  },
+  {
+    "description": "Book trip to Yosemite",
+    "priority": 3,
+    "due": "2025-08-01",
+    "tags": [
+      "travel"
+    ],
+    "done": true,
+    "notes": null
+  },
+  {
+    "description": "Read 'Rust for Rustaceans'",
+    "priority": null,
+    "due": null,
+    "tags": [
+      "reading",
+      "rust"
+    ],
+    "done": false,
+    "notes": "Chapter 5 is where async starts to click"
+  },
+  {
+    "description": "Push v0.2.0 to crates.io",
+    "priority": 1,
+    "due": "2025-07-20",
+    "tags": [
+      "release",
+      "rust"
+    ],
+    "done": false,
+    "notes": "Remember to update changelog and tag release"
+  },
+  {
+    "description": "Call dentist to reschedule",
+    "priority": 2,
+    "due": "2025-07-14",
+    "tags": [
+      "personal"
+    ],
+    "done": true,
+    "notes": ""
+  },
+  {
+    "description": "Organize GitHub issues",
+    "priority": 3,
+    "due": null,
+    "tags": [
+      "dev",
+      "planning"
+    ],
+    "done": false,
+    "notes": null
+  },
+  {
+    "description": "Water the plants",
+    "priority": null,
+    "due": null,
+    "tags": [],
+    "done": false,
+    "notes": null
+  },
+  {
+    "description": "Plan NYC weekend trip",
+    "priority": 2,
+    "due": "2025-07-18",
+    "tags": [
+      "personal",
+      "travel"
+    ],
+    "done": false,
+    "notes": "Check train schedules and Airbnb"
+  },
+  {
+    "description": "Reply to Maddie’s onboarding doc comments",
+    "priority": 1,
+    "due": "2025-07-13",
+    "tags": [
+      "work",
+      "docs"
+    ],
+    "done": false,
+    "notes": "She flagged the enum section"
+  }
+]

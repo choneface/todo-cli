@@ -40,6 +40,7 @@ fn match_key_code_for_normal_mode(code: KeyCode) -> InputEvent {
         KeyCode::Char(' ') => InputEvent::ToggleExpand,
         KeyCode::Char('e') => InputEvent::EnableEditing,
         KeyCode::Esc => InputEvent::DisableEditing,
+        KeyCode::Backspace => InputEvent::Backspace,
         _ => InputEvent::None,
     }
 }

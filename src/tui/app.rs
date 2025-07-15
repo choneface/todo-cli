@@ -155,6 +155,22 @@ impl App {
             self.selected = 0; // fallback (shouldn’t happen)
         }
     }
+
+    pub fn remove_selected(&mut self) {
+        if let Some(&idx) = self.visual_order.get(self.selected) {
+            self.todos.remove(idx);
+            self.visual_order.remove(self.selected);
+            for i in self.visual_order.iter_mut() {
+                if *i > idx {
+                    *i -= 1;
+                }
+            }
+            self.selected = self
+                .selected
+                .saturating_sub(1)
+                .clamp(0, self.visual_order.len());
+        }
+    }
 }
 
 #[cfg(test)]
@@ -308,6 +324,91 @@ mod tests {
         // After resort, the edited tod0 should now be at visual index 0
         assert_eq!(app.selected, 0);
         assert_eq!(app.todos[0].priority, Some(0));
+    }
+
+    #[test]
+    fn remove_selected_removes_item_and_updates_visual_order() {
+        let mut app = App::new(vec![
+            todo_with("a", Some(2)), // idx 0
+            todo_with("b", Some(1)), // idx 1
+            todo_with("c", Some(3)), // idx 2
+        ]);
+
+        // Priority order should be: b (1), a (2), c (3)
+        // visual_order: [1, 0, 2]
+        assert_eq!(app.visual_order, vec![1, 0, 2]);
+
+        app.selected = 0; // selecting "b" (idx 1 in todos)
+        app.remove_selected();
+
+        // "b" should be gone
+        assert_eq!(app.todos.len(), 2);
+        assert!(app.todos.iter().all(|t| t.description != "b"));
+
+        // visual_order should be rebuilt and reindexed correctly
+        assert_eq!(app.visual_order.len(), 2);
+        assert_eq!(app.visual_order.iter().all(|&i| i < app.todos.len()), true);
+
+        // selected index should be clamped to 0
+        assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn remove_selected_decrements_indices_after_removed_todo() {
+        let mut app = App::new(vec![
+            todo_with("a", Some(1)), // idx 0
+            todo_with("b", Some(2)), // idx 1
+            todo_with("c", Some(3)), // idx 2
+        ]);
+
+        // visual_order should be: [0, 1, 2]
+        assert_eq!(app.visual_order, vec![0, 1, 2]);
+
+        app.selected = 1; // select "b"
+        app.remove_selected();
+
+        // "b" is removed from todos
+        assert_eq!(app.todos.len(), 2);
+        assert_eq!(
+            app.todos.iter().map(|t| &t.description).collect::<Vec<_>>(),
+            vec!["a", "c"]
+        );
+
+        // visual_order should now reference updated indices: [0, 1]
+        assert_eq!(app.visual_order, vec![0, 1]);
+
+        // selected should move to 0
+        assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn remove_selected_from_empty_does_nothing() {
+        let mut app = App::new(vec![]);
+
+        app.remove_selected();
+
+        // still empty, no panic
+        assert_eq!(app.todos.len(), 0);
+        assert_eq!(app.visual_order.len(), 0);
+    }
+
+    #[test]
+    fn remove_selected_with_last_item_selected() {
+        let mut app = App::new(vec![
+            todo_with("a", Some(1)), // idx 0
+            todo_with("b", Some(2)), // idx 1
+        ]);
+
+        // visual_order: [0, 1]
+        app.selected = 1;
+        app.remove_selected();
+
+        // Should remove "b"
+        assert_eq!(app.todos.len(), 1);
+        assert_eq!(app.todos[0].description, "a");
+
+        // selected should clamp to 0
+        assert_eq!(app.selected, 0);
     }
 
     fn todo_with(desc: &str, prio: Option<u8>) -> TodoItem {
