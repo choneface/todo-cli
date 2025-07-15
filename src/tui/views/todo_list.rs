@@ -48,6 +48,7 @@ fn render_keybindings(f: &mut Frame, rect: Rect) {
         Span::raw("[⏎] Toggle Done    "),
         Span::raw("[Space] Expand    "),
         Span::raw("[e] Edit    "),
+        Span::raw("[⌫] Delete    "),
         Span::raw("[q] Quit"),
     ]))
     .block(Block::default());

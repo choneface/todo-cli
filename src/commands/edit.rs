@@ -47,6 +47,7 @@ fn launch_ui(storage: impl Storage) -> Result<(), Box<dyn std::error::Error>> {
                 crate::tui::events::InputEvent::ToggleExpand => {
                     app.toggle_expanded();
                 }
+                crate::tui::events::InputEvent::Backspace => app.remove_selected(),
                 crate::tui::events::InputEvent::EnableEditing => app.toggle_mode(),
                 _ => {}
             },
