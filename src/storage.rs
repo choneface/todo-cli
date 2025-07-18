@@ -35,7 +35,14 @@ impl FileStorage {
 
 impl Storage for FileStorage {
     fn load_items(&self) -> io::Result<Vec<TodoItem>> {
-        let file = OpenOptions::new().read(true).open(&self.path)?;
+        let file = match OpenOptions::new().read(true).open(&self.path) {
+            Ok(f) => f,
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {
+                // Treat as empty store
+                return Ok(Vec::new());
+            }
+            Err(e) => return Err(e),
+        };
 
         // make sure we handle empty files gracefully
         let metadata = file.metadata()?;
@@ -66,6 +73,13 @@ impl Storage for FileStorage {
 mod tests {
     use super::*;
     use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_load_non_existent_file() {
+        let storage = FileStorage::new("does_not_exist.json");
+        let items = storage.load_items().unwrap();
+        assert_eq!(items.len(), 0);
+    }
 
     #[test]
     fn test_load_empty_file() {

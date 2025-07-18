@@ -1,6 +1,6 @@
 [package]
 name = "crix-todo"
-version = "0.4.1"
+version = "0.4.2"
 edition = "2024"
 authors = ["Gavin Garcia <gavin.garcia0001@gmail.com>"]
 description = "A terminal-based todo list manager with CLI and TUI support"
