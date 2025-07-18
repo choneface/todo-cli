@@ -171,6 +171,37 @@ impl App {
                 .clamp(0, self.visual_order.len());
         }
     }
+    pub fn promote_selected(&mut self) {
+        let idx = self.visual_order[self.selected];
+        let new_priority = match self.todos[idx].priority {
+            Some(p) if p > 0 => Some(p - 1),
+            Some(_) => Some(0), // already zero
+            None => self.get_last_non_none_priority(),
+        };
+
+        self.todos[idx].priority = new_priority;
+        self.recompute_visual_order(idx);
+    }
+
+    pub fn demote_selected(&mut self) {
+        let idx = self.visual_order[self.selected];
+        let new_priority = match self.todos[idx].priority {
+            // 99 == None
+            Some(p) if p < 98 => Some(p + 1),
+            _ => None,
+        };
+
+        self.todos[idx].priority = new_priority;
+        self.recompute_visual_order(idx);
+    }
+
+    pub fn get_last_non_none_priority(&mut self) -> Option<u8> {
+        self.visual_order
+            .iter()
+            .rev()
+            .filter_map(|&i| self.todos[i].priority)
+            .next()
+    }
 }
 
 #[cfg(test)]
@@ -409,6 +440,108 @@ mod tests {
 
         // selected should clamp to 0
         assert_eq!(app.selected, 0);
+    }
+
+    #[test]
+    fn get_last_non_none_priority_returns_highest_defined_priority() {
+        let mut app = App::new(vec![
+            todo_with("a", Some(3)),
+            todo_with("b", Some(1)),
+            todo_with("c", None),
+            todo_with("d", Some(5)),
+            todo_with("e", None),
+        ]);
+
+        // visual_order will sort by priority.unwrap_or(99):
+        // Order: b (1), a (3), d (5), c (None), e (None)
+        // Reversed: e, c, d, a, b → last non-none = d = 5
+
+        assert_eq!(app.get_last_non_none_priority(), Some(5));
+    }
+
+    #[test]
+    fn get_last_non_none_priority_skips_all_nones() {
+        let mut app = App::new(vec![
+            todo_with("a", None),
+            todo_with("b", None),
+            todo_with("c", None),
+        ]);
+
+        assert_eq!(app.get_last_non_none_priority(), None);
+    }
+
+    #[test]
+    fn get_last_non_none_priority_returns_lowest_if_only_one_defined() {
+        let mut app = App::new(vec![
+            todo_with("a", None),
+            todo_with("b", Some(2)),
+            todo_with("c", None),
+        ]);
+
+        assert_eq!(app.get_last_non_none_priority(), Some(2));
+    }
+
+    #[test]
+    fn get_last_non_none_priority_with_empty_list() {
+        let mut app = App::new(vec![]);
+        assert_eq!(app.get_last_non_none_priority(), None);
+    }
+
+    #[test]
+    fn promote_selected_decreases_priority() {
+        let mut app = App::new(vec![todo_with("a", Some(3)), todo_with("b", Some(1))]);
+
+        app.selected = 1; // "a" with priority 3
+        app.promote_selected();
+        assert_eq!(app.todos[app.visual_order[1]].priority, Some(2));
+
+        app.promote_selected();
+        assert_eq!(app.todos[app.visual_order[1]].priority, Some(1));
+
+        app.promote_selected();
+        // at this point it has become the first element in the list
+        assert_eq!(app.todos[app.visual_order[0]].priority, Some(0));
+
+        // promoting again at 0 should clamp at 0
+        app.promote_selected();
+        assert_eq!(app.todos[app.visual_order[0]].priority, Some(0));
+    }
+
+    #[test]
+    fn promote_selected_sets_priority_from_last_non_none_if_none() {
+        let mut app = App::new(vec![todo_with("a", Some(2)), todo_with("b", None)]);
+
+        app.selected = 1; // select "b" which has None
+        app.promote_selected();
+
+        // it should take priority from "a" (2)
+        assert_eq!(app.todos[app.visual_order[1]].priority, Some(2));
+    }
+
+    #[test]
+    fn demote_selected_increases_priority() {
+        let mut app = App::new(vec![todo_with("a", Some(0)), todo_with("b", Some(98))]);
+
+        app.selected = 0;
+        app.demote_selected();
+        assert_eq!(app.todos[app.visual_order[0]].priority, Some(1));
+
+        app.selected = 1;
+        app.demote_selected();
+        assert_eq!(app.todos[app.visual_order[1]].priority, None);
+
+        app.demote_selected();
+        // stays None
+        assert_eq!(app.todos[app.visual_order[1]].priority, None);
+    }
+
+    #[test]
+    fn demote_selected_keeps_none_priority() {
+        let mut app = App::new(vec![todo_with("a", None)]);
+
+        app.selected = 0;
+        app.demote_selected();
+        assert_eq!(app.todos[app.visual_order[0]].priority, None);
     }
 
     fn todo_with(desc: &str, prio: Option<u8>) -> TodoItem {

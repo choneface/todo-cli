@@ -13,6 +13,8 @@ pub enum InputEvent {
     EnableEditing,
     DisableEditing,
     Backspace,
+    PromotePriority,
+    DemotePriority,
     Char(char),
     None,
 }
@@ -41,6 +43,8 @@ fn match_key_code_for_normal_mode(code: KeyCode) -> InputEvent {
         KeyCode::Char('e') => InputEvent::EnableEditing,
         KeyCode::Esc => InputEvent::DisableEditing,
         KeyCode::Backspace => InputEvent::Backspace,
+        KeyCode::Char('p') => InputEvent::PromotePriority,
+        KeyCode::Char('l') => InputEvent::DemotePriority,
         _ => InputEvent::None,
     }
 }
