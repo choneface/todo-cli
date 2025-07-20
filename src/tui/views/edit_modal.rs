@@ -3,7 +3,7 @@ use crate::tui::view_models::edit_mode_modal_view_model::{EditModeModalViewModel
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Flex, Layout, Margin, Rect};
 use ratatui::prelude::{Color, Line, Modifier, Span, Style};
-use ratatui::widgets::{Block, Borders, Clear, Paragraph};
+use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
 
 pub fn render(f: &mut Frame, app: &App) {
     let outer_block = Block::bordered().borders(Borders::ALL);
@@ -86,6 +86,7 @@ fn render_field<'a>(input: &Input) -> Paragraph<'a> {
             true => Style::default().fg(Color::Yellow),
             false => Style::default().fg(Color::White),
         })
+        .wrap(Wrap { trim: true })
 }
 fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
