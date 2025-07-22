@@ -75,25 +75,57 @@ fn render_status_span(f: &mut Frame, area: Rect, is_done: bool) {
 
 fn get_cursor_pos(area: Rect, view_model: &EditModeModalViewModel) -> (u16, u16) {
     let input = view_model.fields.get(view_model.selected_index).unwrap();
-    let lines = wrap(input.value.as_str(), area.width as usize);
+    let wrap_width = area.width as usize;
+    let lines = wrap(input.value.as_str(), wrap_width);
 
     let mut total_chars = 0;
     for (i, line) in lines.iter().enumerate() {
         let line_length = line.chars().count();
+
         if input.character_index <= total_chars + line_length {
-            let cursor_x = area.x + 1 + (input.character_index - total_chars) as u16;
-            let cursor_y = area.y + 3 + i as u16 + (3 * view_model.selected_index) as u16;
+            let mut cursor_x = area.x + 1 + (input.character_index - total_chars) as u16;
+            let cursor_y = area.y + 3 + i as u16 + (3 * view_model.selected_index as u16);
+
+            // 👇 Adjust for trailing spaces that weren't wrapped
+            if input.character_index > 0
+                && input.character_index <= input.value.len()
+                && input.value.chars().nth(input.character_index) == Some(' ')
+                && !line.ends_with(' ')
+            {
+                // collect only the part *before* the cursor
+                let before: Vec<char> = input
+                    .value
+                    .chars()
+                    .take(input.character_index) // safe: <= total chars
+                    .collect();
+
+                // iterate the vector backwards
+                let trailing_spaces = before.iter().rev().take_while(|&&c| c == ' ').count();
+
+                cursor_x += trailing_spaces as u16;
+            }
+
             return (cursor_x, cursor_y);
         }
+
         total_chars += line_length;
     }
 
+    // Fallback: after last character
     let last_line = lines.len().saturating_sub(1);
     let last_line_len = lines.last().map(|l| l.chars().count()).unwrap_or(0);
-    (
-        area.x + 1 + last_line_len as u16,
-        area.y + 3 + (3 * view_model.selected_index as u16) + last_line as u16,
-    )
+
+    let mut x = area.x + 1 + last_line_len as u16;
+    let y = area.y + 3 + (3 * view_model.selected_index as u16) + last_line as u16;
+
+    // 👇 Add trailing-space adjustment here too
+    let before: Vec<char> = input.value.chars().take(input.character_index).collect();
+
+    let trailing_spaces = before.iter().rev().take_while(|&&c| c == ' ').count();
+
+    x += trailing_spaces as u16;
+
+    (x, y)
 }
 
 fn render_cursor(f: &mut Frame, area: Rect, view_model: &EditModeModalViewModel) {
