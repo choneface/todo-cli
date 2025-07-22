@@ -4,6 +4,7 @@ use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Flex, Layout, Margin, Rect};
 use ratatui::prelude::{Color, Line, Modifier, Span, Style};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
+use textwrap::wrap;
 
 pub fn render(f: &mut Frame, app: &App) {
     let outer_block = Block::bordered().borders(Borders::ALL);
@@ -72,10 +73,31 @@ fn render_status_span(f: &mut Frame, area: Rect, is_done: bool) {
     f.render_widget(status, area);
 }
 
+fn get_cursor_pos(area: Rect, view_model: &EditModeModalViewModel) -> (u16, u16) {
+    let input = view_model.fields.get(view_model.selected_index).unwrap();
+    let lines = wrap(input.value.as_str(), area.width as usize);
+
+    let mut total_chars = 0;
+    for (i, line) in lines.iter().enumerate() {
+        let line_length = line.chars().count();
+        if input.character_index <= total_chars + line_length {
+            let cursor_x = area.x + 1 + (input.character_index - total_chars) as u16;
+            let cursor_y = area.y + 3 + i as u16 + (3 * view_model.selected_index) as u16;
+            return (cursor_x, cursor_y);
+        }
+        total_chars += line_length;
+    }
+
+    let last_line = lines.len().saturating_sub(1);
+    let last_line_len = lines.last().map(|l| l.chars().count()).unwrap_or(0);
+    (
+        area.x + 1 + last_line_len as u16,
+        area.y + 3 + (3 * view_model.selected_index as u16) + last_line as u16,
+    )
+}
+
 fn render_cursor(f: &mut Frame, area: Rect, view_model: &EditModeModalViewModel) {
-    let selected_input = view_model.fields.get(view_model.selected_index).unwrap();
-    let x = area.x + selected_input.character_index as u16 + 1;
-    let y = area.y + 3 + (3 * view_model.selected_index as u16);
+    let (x, y) = get_cursor_pos(area, view_model);
     f.set_cursor(x, y)
 }
 
