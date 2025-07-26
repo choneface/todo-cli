@@ -105,6 +105,17 @@ fn get_cursor_pos(area: Rect, view_model: &EditModeModalViewModel) -> (u16, u16)
                 cursor_x += trailing_spaces as u16;
             }
 
+            let wrap_width = area.width.saturating_sub(2) as usize; // subtract borders
+            if line_length < wrap_width && i > 0 {
+                // Is the cursor visually beyond the real line?
+                let visual_offset = input.character_index - total_chars;
+                if visual_offset >= line_length {
+                    // Ratatui may have "pushed" a word, leaving virtual space
+                    let inferred_spaces = wrap_width - line_length;
+                    cursor_x += inferred_spaces as u16;
+                }
+            }
+
             return (cursor_x, cursor_y);
         }
 
@@ -118,12 +129,23 @@ fn get_cursor_pos(area: Rect, view_model: &EditModeModalViewModel) -> (u16, u16)
     let mut x = area.x + 1 + last_line_len as u16;
     let y = area.y + 3 + (3 * view_model.selected_index as u16) + last_line as u16;
 
-    // 👇 Add trailing-space adjustment here too
+    // Add trailing-space adjustment here too
     let before: Vec<char> = input.value.chars().take(input.character_index).collect();
 
     let trailing_spaces = before.iter().rev().take_while(|&&c| c == ' ').count();
 
     x += trailing_spaces as u16;
+
+    let wrap_width = area.width.saturating_sub(2) as usize; // subtract borders
+    if last_line_len < wrap_width {
+        // Is the cursor visually beyond the real line?
+        let visual_offset = input.character_index - total_chars;
+        if visual_offset >= last_line_len {
+            // Ratatui may have "pushed" a word, leaving virtual space
+            let inferred_spaces = wrap_width - last_line_len;
+            x += inferred_spaces as u16;
+        }
+    }
 
     (x, y)
 }
