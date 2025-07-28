@@ -16,6 +16,7 @@ pub enum InputEvent {
     PromotePriority,
     DemotePriority,
     Char(char),
+    TodoSplit,
     None,
 }
 
@@ -45,6 +46,7 @@ fn match_key_code_for_normal_mode(code: KeyCode) -> InputEvent {
         KeyCode::Backspace => InputEvent::Backspace,
         KeyCode::Char('p') => InputEvent::PromotePriority,
         KeyCode::Char('l') => InputEvent::DemotePriority,
+        KeyCode::Char('b') => InputEvent::TodoSplit,
         _ => InputEvent::None,
     }
 }
