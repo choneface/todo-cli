@@ -202,6 +202,14 @@ impl App {
             .filter_map(|&i| self.todos[i].priority)
             .next()
     }
+
+    pub fn split_current(&mut self) {
+        if let Some(idx) = self.visual_order.get(self.selected) {
+            if let Some(current) = self.todos.get_mut(*idx) {
+                current.description += " - part 1"
+            }
+        }
+    }
 }
 
 #[cfg(test)]
