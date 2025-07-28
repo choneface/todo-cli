@@ -202,6 +202,18 @@ impl App {
             .filter_map(|&i| self.todos[i].priority)
             .next()
     }
+
+    pub fn split_current(&mut self) {
+        if let Some(idx) = self.visual_order.get(self.selected) {
+            if let Some(current) = self.todos.get_mut(*idx) {
+                let current_clone = current.clone();
+                let new = TodoItem::create_part_two(current_clone);
+                current.description += " - part 1";
+                self.todos.push(new);
+                self.recompute_visual_order(*idx);
+            }
+        }
+    }
 }
 
 #[cfg(test)]

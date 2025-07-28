@@ -14,6 +14,19 @@ pub struct TodoItem {
     pub notes: Option<String>,
 }
 
+impl TodoItem {
+    pub fn create_part_two(todo: TodoItem) -> TodoItem {
+        TodoItem {
+            description: todo.description + " - part 2",
+            priority: todo.priority,
+            due: todo.due,
+            tags: todo.tags,
+            done: false,
+            notes: todo.notes,
+        }
+    }
+}
+
 #[automock]
 pub trait Storage {
     fn load_items(&self) -> io::Result<Vec<TodoItem>>;
