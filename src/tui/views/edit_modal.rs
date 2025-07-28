@@ -3,7 +3,8 @@ use crate::tui::view_models::edit_mode_modal_view_model::{EditModeModalViewModel
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Flex, Layout, Margin, Rect};
 use ratatui::prelude::{Color, Line, Modifier, Span, Style};
-use ratatui::widgets::{Block, Borders, Clear, Paragraph};
+use ratatui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
+use textwrap::wrap;
 
 pub fn render(f: &mut Frame, app: &App) {
     let outer_block = Block::bordered().borders(Borders::ALL);
@@ -72,10 +73,85 @@ fn render_status_span(f: &mut Frame, area: Rect, is_done: bool) {
     f.render_widget(status, area);
 }
 
+fn get_cursor_pos(area: Rect, view_model: &EditModeModalViewModel) -> (u16, u16) {
+    let input = view_model.fields.get(view_model.selected_index).unwrap();
+    let wrap_width = area.width as usize;
+    let lines = wrap(input.value.as_str(), wrap_width);
+
+    let mut total_chars = 0;
+    for (i, line) in lines.iter().enumerate() {
+        let line_length = line.chars().count();
+
+        if input.character_index <= total_chars + line_length {
+            let mut cursor_x = area.x + 1 + (input.character_index - total_chars) as u16;
+            let cursor_y = area.y + 3 + i as u16 + (3 * view_model.selected_index as u16);
+
+            // 👇 Adjust for trailing spaces that weren't wrapped
+            if input.character_index > 0
+                && input.character_index <= input.value.len()
+                && input.value.chars().nth(input.character_index) == Some(' ')
+                && !line.ends_with(' ')
+            {
+                // collect only the part *before* the cursor
+                let before: Vec<char> = input
+                    .value
+                    .chars()
+                    .take(input.character_index) // safe: <= total chars
+                    .collect();
+
+                // iterate the vector backwards
+                let trailing_spaces = before.iter().rev().take_while(|&&c| c == ' ').count();
+
+                cursor_x += trailing_spaces as u16;
+            }
+
+            let wrap_width = area.width.saturating_sub(2) as usize; // subtract borders
+            if line_length < wrap_width && i > 0 {
+                // Is the cursor visually beyond the real line?
+                let visual_offset = input.character_index - total_chars;
+                if visual_offset >= line_length {
+                    // Ratatui may have "pushed" a word, leaving virtual space
+                    let inferred_spaces = wrap_width - line_length;
+                    cursor_x += inferred_spaces as u16;
+                }
+            }
+
+            return (cursor_x, cursor_y);
+        }
+
+        total_chars += line_length;
+    }
+
+    // Fallback: after last character
+    let last_line = lines.len().saturating_sub(1);
+    let last_line_len = lines.last().map(|l| l.chars().count()).unwrap_or(0);
+
+    let mut x = area.x + 1 + last_line_len as u16;
+    let y = area.y + 3 + (3 * view_model.selected_index as u16) + last_line as u16;
+
+    // Add trailing-space adjustment here too
+    let before: Vec<char> = input.value.chars().take(input.character_index).collect();
+
+    let trailing_spaces = before.iter().rev().take_while(|&&c| c == ' ').count();
+
+    x += trailing_spaces as u16;
+
+    let wrap_width = area.width.saturating_sub(2) as usize; // subtract borders
+    if last_line_len < wrap_width {
+        // Is the cursor visually beyond the real line?
+        let visual_offset = input.character_index - total_chars;
+        if visual_offset >= last_line_len {
+            // Ratatui may have "pushed" a word, leaving virtual space
+            let inferred_spaces = wrap_width - last_line_len;
+            x += inferred_spaces as u16;
+        }
+    }
+
+    (x, y)
+}
+
 fn render_cursor(f: &mut Frame, area: Rect, view_model: &EditModeModalViewModel) {
-    let selected_input = view_model.fields.get(view_model.selected_index).unwrap();
-    let x = area.x + selected_input.character_index as u16 + 1;
-    let y = area.y + 3 + (3 * view_model.selected_index as u16);
+    let (x, y) = get_cursor_pos(area, view_model);
     f.set_cursor(x, y)
 }
 
@@ -86,6 +162,7 @@ fn render_field<'a>(input: &Input) -> Paragraph<'a> {
             true => Style::default().fg(Color::Yellow),
             false => Style::default().fg(Color::White),
         })
+        .wrap(Wrap { trim: true })
 }
 fn popup_area(area: Rect, percent_x: u16, percent_y: u16) -> Rect {
     let vertical = Layout::vertical([Constraint::Percentage(percent_y)]).flex(Flex::Center);
